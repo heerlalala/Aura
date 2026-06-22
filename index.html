@@ -397,7 +397,7 @@
           <div class="glass-panel paste-box" style="margin-top:0; padding:1.5rem; display:flex; flex-direction:column;">
             <h3 style="margin-bottom: 0.5rem;">Paste Conversation Transcript</h3>
             <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1rem;">Paste directly from messaging apps. Use format "Name: message text", one per line.</p>
-            <textarea id="pasted-chat-text" class="form-textarea" style="flex:1; min-height: 250px; font-family: monospace; font-size:0.9rem; background:rgba(0,0,0,0.2);" placeholder="Taylor: Why haven't you replied all day?&#10;Alex: I was in meetings, I told you that.&#10;Taylor: It takes 5 seconds to send a text. You are ignoring me."></textarea>
+            <textarea id="pasted-chat-text" class="form-textarea" style="flex:1; min-height: 250px; font-family: monospace; font-size:0.9rem;" placeholder="Taylor: Why haven't you replied all day?&#10;Alex: I was in meetings, I told you that.&#10;Taylor: It takes 5 seconds to send a text. You are ignoring me."></textarea>
             <button class="btn btn-primary" style="margin-top: 1rem; align-self: flex-end;" id="btn-analyze-paste">Analyze Conversation</button>
           </div>
         </div>
@@ -495,7 +495,7 @@
               <!-- SVG Effort Balance visualizer -->
               <div style="position:relative; width: 220px; height: 120px; margin-bottom:1rem;">
                 <svg width="220" height="120">
-                  <path d="M 20,90 Q 110,20 200,90" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="12" stroke-linecap="round"></path>
+                  <path d="M 20,90 Q 110,20 200,90" fill="none" stroke="rgba(15, 23, 42, 0.05)" stroke-width="12" stroke-linecap="round"></path>
                   <path d="M 20,90 Q 110,20 200,90" id="effort-scale-path" fill="none" stroke="url(#scoreGradient)" stroke-width="12" stroke-linecap="round" stroke-dasharray="290" stroke-dashoffset="145"></path>
                   <!-- Scale Indicator pointer -->
                   <circle cx="110" cy="55" r="8" fill="var(--accent)" id="effort-scale-pointer"></circle>
@@ -621,7 +621,7 @@
 
             <div class="form-group" style="flex:1; display:flex; flex-direction:column;">
               <label>Translated Constructive Boundary Suggestion</label>
-              <div id="boundary-translation-output" class="form-input" style="flex:1; min-height: 120px; background:rgba(168,85,247,0.05); border-color:var(--secondary); overflow-y:auto; color:#d8b4fe; font-style:italic;">
+              <div id="boundary-translation-output" class="form-input" style="flex:1; min-height: 120px; background:rgba(148,163,184,0.08); border-color:var(--border-color); overflow-y:auto; color:var(--text-secondary); font-style:italic;">
                 Translations will appear here. Enter text and press the sparkles button.
               </div>
             </div>
@@ -647,7 +647,7 @@
             </div>
             
             <div class="simulator-input-area">
-              <input type="text" id="sim-input-text" class="form-input" style="background:rgba(0,0,0,0.3);" placeholder="Type a mock response to test...">
+              <input type="text" id="sim-input-text" class="form-input" placeholder="Type a mock response to test...">
               <button class="btn btn-primary" id="btn-sim-send">Send</button>
             </div>
           </div>
@@ -840,7 +840,7 @@
             <!-- Audit Logs snippet -->
             <div style="margin-top: 1.5rem; border-top:1px solid var(--border-color); padding-top: 1rem;">
               <h4 style="font-size:0.9rem; margin-bottom:0.5rem;">Security Audit Logs</h4>
-              <div style="background:rgba(0,0,0,0.3); border-radius:var(--radius-md); padding:0.75rem; font-family:monospace; font-size:0.75rem; color:var(--text-secondary); max-height:100px; overflow-y:auto;" id="settings-audit-logs">
+              <div style="background:rgba(15, 23, 42, 0.05); border-radius:var(--radius-md); padding:0.75rem; font-family:monospace; font-size:0.75rem; color:var(--text-secondary); max-height:100px; overflow-y:auto;" id="settings-audit-logs">
                 [2026-06-22 17:30] Session initialized.<br>
                 [2026-06-22 17:31] Encryption key generated.<br>
                 [2026-06-22 17:32] Security modules checked OK.

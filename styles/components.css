@@ -1,4 +1,4 @@
-/* Aura UI Components Stylesheet */
+/* Aura UI Components Stylesheet - Light Monochromatic Slate Theme */
 
 /* Buttons */
 .btn {
@@ -18,33 +18,35 @@
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+  background: var(--primary);
+  box-shadow: 0 4px 10px rgba(51, 65, 85, 0.12);
 }
 
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+  background: var(--primary-hover);
+  box-shadow: 0 6px 15px rgba(51, 65, 85, 0.2);
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(148, 163, 184, 0.08);
   border: 1px solid var(--border-color);
+  color: var(--text-primary);
 }
 
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(148, 163, 184, 0.15);
   border-color: var(--border-color-hover);
 }
 
 .btn-danger {
-  background: rgba(239, 68, 68, 0.2);
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  color: #fca5a5;
+  background: rgba(225, 29, 72, 0.06);
+  border: 1px solid rgba(225, 29, 72, 0.15);
+  color: var(--danger);
 }
 
 .btn-danger:hover {
-  background: rgba(239, 68, 68, 0.35);
+  background: rgba(225, 29, 72, 0.12);
 }
 
 .btn-icon {
@@ -68,10 +70,10 @@
 .form-input, .form-select, .form-textarea {
   width: 100%;
   padding: 0.75rem 1rem;
-  background: rgba(15, 12, 30, 0.6);
+  background: rgba(255, 255, 255, 0.8);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  color: white;
+  color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: 0.95rem;
   transition: var(--transition-fast);
@@ -79,8 +81,8 @@
 
 .form-input:focus, .form-select:focus, .form-textarea:focus {
   outline: none;
-  border-color: var(--secondary);
-  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(51, 65, 85, 0.08);
 }
 
 /* Section Header styling */
@@ -94,7 +96,7 @@
 .view-header h2 {
   font-size: 1.85rem;
   font-weight: 700;
-  color: white;
+  color: var(--text-primary);
 }
 
 .view-header p {
@@ -161,7 +163,7 @@
   width: 48px;
   height: 48px;
   border-radius: var(--radius-md);
-  background: rgba(99, 102, 241, 0.15);
+  background: rgba(148, 163, 184, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -215,8 +217,8 @@
 }
 
 .auth-tab.active {
-  color: white;
-  border-color: var(--secondary);
+  color: var(--text-primary);
+  border-color: var(--primary);
 }
 
 .onboarding-wizard {
@@ -248,7 +250,7 @@
   top: 15px;
   left: 0;
   height: 2px;
-  background: var(--secondary);
+  background: var(--primary);
   z-index: 2;
   transition: width var(--transition-normal);
 }
@@ -270,14 +272,14 @@
 }
 
 .wizard-step-node.active {
-  border-color: var(--secondary);
-  color: white;
-  box-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
+  border-color: var(--primary);
+  color: var(--text-primary);
+  box-shadow: 0 0 10px rgba(51, 65, 85, 0.1);
 }
 
 .wizard-step-node.completed {
-  background: var(--secondary);
-  border-color: var(--secondary);
+  background: var(--primary);
+  border-color: var(--primary);
   color: white;
 }
 
@@ -298,13 +300,13 @@
 
 .wizard-option-card:hover {
   border-color: var(--primary);
-  background: rgba(99, 102, 241, 0.05);
+  background: rgba(71, 85, 105, 0.04);
 }
 
 .wizard-option-card.selected {
-  border-color: var(--secondary);
-  background: rgba(168, 85, 247, 0.1);
-  box-shadow: 0 0 10px rgba(168, 85, 247, 0.2);
+  border-color: var(--primary);
+  background: rgba(71, 85, 105, 0.08);
+  box-shadow: none;
 }
 
 /* DASHBOARD DYNAMIC ELEMENTS */
@@ -330,7 +332,7 @@
 
 .score-dial-bg {
   fill: none;
-  stroke: rgba(255, 255, 255, 0.05);
+  stroke: rgba(15, 23, 42, 0.06);
   stroke-width: 12;
 }
 
@@ -355,7 +357,7 @@
 .score-value {
   font-size: 2.25rem;
   font-weight: 800;
-  color: white;
+  color: var(--text-primary);
   line-height: 1;
 }
 
@@ -369,8 +371,8 @@
 
 .insight-item {
   padding: 1rem;
-  border-left: 3px solid var(--primary);
-  background: rgba(255, 255, 255, 0.02);
+  border-left: 3px solid var(--secondary);
+  background: rgba(15, 23, 42, 0.02);
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
   margin-bottom: 0.75rem;
 }
@@ -386,12 +388,12 @@
   text-align: center;
   cursor: pointer;
   transition: var(--transition-normal);
-  background: rgba(255, 255, 255, 0.01);
+  background: rgba(15, 23, 42, 0.01);
 }
 
 .dropzone:hover, .dropzone.dragover {
-  border-color: var(--secondary);
-  background: rgba(168, 85, 247, 0.05);
+  border-color: var(--primary);
+  background: rgba(100, 116, 139, 0.05);
 }
 
 .dropzone-icon {
@@ -416,7 +418,7 @@
 .analysis-tab-btn {
   padding: 0.5rem 1rem;
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(15, 23, 42, 0.03);
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
   font-weight: 500;
@@ -437,8 +439,8 @@
   margin-bottom: 0.75rem;
 }
 
-.flag-box.red { background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); }
-.flag-box.green { background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); }
+.flag-box.red { background: rgba(225, 29, 72, 0.05); border: 1px solid rgba(225, 29, 72, 0.15); }
+.flag-box.green { background: rgba(13, 148, 136, 0.05); border: 1px solid rgba(13, 148, 136, 0.15); }
 
 .flag-title {
   font-weight: 600;
@@ -448,8 +450,8 @@
   gap: 0.5rem;
 }
 
-.flag-box.red .flag-title { color: #fca5a5; }
-.flag-box.green .flag-title { color: #6ee7b7; }
+.flag-box.red .flag-title { color: var(--danger); }
+.flag-box.green .flag-title { color: var(--success); }
 
 /* Custom SVG Bar Chart UI components */
 .bar-chart-container {
@@ -477,7 +479,7 @@
 .chart-bar-track {
   flex: 1;
   height: 10px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(15, 23, 42, 0.05);
   border-radius: var(--radius-full);
   overflow: hidden;
 }
@@ -500,7 +502,7 @@
 /* REALITY CHECK ENGINE */
 .reality-panel {
   padding: 2rem;
-  border-left: 4px solid var(--accent);
+  border-left: 4px solid var(--secondary);
 }
 
 .reality-rating-slider {
@@ -508,7 +510,7 @@
   width: 100%;
   height: 6px;
   border-radius: var(--radius-full);
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.1);
   outline: none;
 }
 
@@ -518,9 +520,9 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--secondary);
   cursor: pointer;
-  box-shadow: 0 0 10px rgba(236, 72, 153, 0.5);
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.2);
   transition: transform var(--transition-fast);
 }
 
@@ -534,13 +536,13 @@
   justify-content: space-between;
   align-items: center;
   border: 1px solid var(--border-color);
-  background: rgba(236, 72, 153, 0.05);
+  background: rgba(148, 163, 184, 0.08);
 }
 
 .straight-answer-active {
-  border-color: var(--accent);
-  box-shadow: 0 0 15px rgba(236, 72, 153, 0.2);
-  background: rgba(236, 72, 153, 0.08) !important;
+  border-color: var(--primary);
+  box-shadow: none;
+  background: rgba(148, 163, 184, 0.12) !important;
 }
 
 /* Toggle Switch */
@@ -564,7 +566,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(15, 23, 42, 0.1);
   transition: .4s;
   border-radius: 24px;
 }
@@ -582,7 +584,7 @@
 }
 
 input:checked + .slider {
-  background-color: var(--accent);
+  background-color: var(--primary);
 }
 
 input:checked + .slider:before {
@@ -597,7 +599,7 @@ input:checked + .slider:before {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  background: rgba(11, 8, 19, 0.5);
+  background: rgba(255, 255, 255, 0.6);
 }
 
 .simulator-chat-area {
@@ -618,9 +620,9 @@ input:checked + .slider:before {
 
 .sim-message.partner {
   align-self: flex-start;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(15, 23, 42, 0.04);
   border: 1px solid var(--border-color);
-  color: white;
+  color: var(--text-primary);
 }
 
 .sim-message.user {
@@ -632,16 +634,16 @@ input:checked + .slider:before {
 .sim-message.ai-feedback {
   align-self: center;
   max-width: 90%;
-  background: rgba(168, 85, 247, 0.1);
+  background: rgba(148, 163, 184, 0.08);
   border: 1px dashed var(--secondary);
-  color: #d8b4fe;
+  color: var(--text-secondary);
   font-size: 0.85rem;
 }
 
 .simulator-input-area {
   padding: 1rem;
   border-top: 1px solid var(--border-color);
-  background: rgba(15, 12, 30, 0.8);
+  background: rgba(255, 255, 255, 0.9);
   display: flex;
   gap: 0.75rem;
 }
@@ -700,7 +702,7 @@ input:checked + .slider:before {
 
 /* MOCK AUDIO DECK */
 .audio-player-mock {
-  background: rgba(168, 85, 247, 0.06);
+  background: rgba(148, 163, 184, 0.08);
   border: 1px solid var(--border-color);
   padding: 1rem;
   border-radius: var(--radius-md);
@@ -721,7 +723,7 @@ input:checked + .slider:before {
 .audio-track-line {
   flex: 1;
   height: 4px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.1);
   border-radius: var(--radius-full);
   position: relative;
 }
