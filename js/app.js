@@ -41,6 +41,7 @@ const app = {
     }
     
     this.startSakuraFalling();
+    this.startWindBlowing();
     this.logAudit("Aura Engine initialized successfully.");
   },
 
@@ -684,15 +685,12 @@ const app = {
   startSakuraFalling: function() {
     const container = document.createElement('div');
     container.id = 'sakura-falling-container';
-    container.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; z-index: 0;';
+    container.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; overflow: hidden; pointer-events: none; z-index: -1;';
     
-    const landing = document.getElementById('view-landing');
-    if (!landing) return;
-    
-    landing.style.position = 'relative';
-    landing.appendChild(container);
+    // Add to body to keep animation active across all pages
+    document.body.appendChild(container);
 
-    const petalCount = 15;
+    const petalCount = 20; // Slightly increased for site-wide density
     for (let i = 0; i < petalCount; i++) {
       this.spawnPetal(container);
     }
@@ -703,9 +701,9 @@ const app = {
     petal.className = 'sakura-petal';
     
     const left = Math.random() * 100;
-    const delay = Math.random() * 8;
-    const duration = 6 + Math.random() * 6;
-    const size = 6 + Math.random() * 8;
+    const delay = Math.random() * 10;
+    const duration = 8 + Math.random() * 8;
+    const size = 6 + Math.random() * 10;
     
     petal.style.left = `${left}%`;
     petal.style.width = `${size}px`;
@@ -714,6 +712,38 @@ const app = {
     petal.style.animationDuration = `${duration}s`;
     
     container.appendChild(petal);
+  },
+
+  startWindBlowing: function() {
+    const container = document.createElement('div');
+    container.id = 'wind-container';
+    container.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; overflow: hidden; pointer-events: none; z-index: -1;';
+    
+    document.body.appendChild(container);
+
+    const windLineCount = 10;
+    for (let i = 0; i < windLineCount; i++) {
+      this.spawnWindLine(container);
+    }
+  },
+
+  spawnWindLine: function(container) {
+    const line = document.createElement('div');
+    line.className = 'wind-line';
+    
+    const top = Math.random() * 95;
+    const width = 120 + Math.random() * 180;
+    const height = 1 + Math.random() * 1.5;
+    const delay = Math.random() * 10;
+    const duration = 6 + Math.random() * 6;
+    
+    line.style.top = `${top}%`;
+    line.style.width = `${width}px`;
+    line.style.height = `${height}px`;
+    line.style.animationDelay = `${delay}s`;
+    line.style.animationDuration = `${duration}s`;
+    
+    container.appendChild(line);
   }
 };
 
