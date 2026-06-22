@@ -10,7 +10,7 @@
 /* Sidebar Styling */
 #sidebar {
   width: 280px;
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.65);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border-right: 1px solid var(--border-color);
@@ -41,7 +41,7 @@
   color: white;
   font-weight: bold;
   font-size: 1.25rem;
-  box-shadow: 0 4px 10px rgba(51, 65, 85, 0.15);
+  box-shadow: 0 4px 10px rgba(181, 77, 98, 0.2);
 }
 
 .logo-text {
@@ -92,13 +92,13 @@
 
 .menu-item:hover {
   color: var(--text-primary);
-  background: rgba(100, 116, 139, 0.06);
+  background: rgba(255, 181, 192, 0.12);
 }
 
 .menu-item.active {
   color: var(--text-primary);
-  background: rgba(51, 65, 85, 0.08);
-  border: 1px solid rgba(51, 65, 85, 0.15);
+  background: rgba(181, 77, 98, 0.08);
+  border: 1px solid rgba(181, 77, 98, 0.15);
   box-shadow: none;
 }
 
@@ -164,7 +164,7 @@
   display: none;
   position: sticky;
   top: 0;
-  background: rgba(248, 250, 252, 0.85);
+  background: rgba(255, 240, 243, 0.85);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border-bottom: 1px solid var(--border-color);
