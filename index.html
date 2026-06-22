@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aura — AI Relationship & Personal Growth Coach</title>
+  <meta name="description" content="Aura is a privacy-first AI relationship coach providing evidence-based insights, communication simulator feedback, and personal growth roadmaps.">
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/navigation.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+
+  <!-- App Wrapper Shell -->
+  <div id="app-container">
+
+    <!-- Mobile Top Header -->
+    <header id="mobile-header">
+      <div class="sidebar-header" style="padding:0">
+        <div class="logo-icon">A</div>
+        <span class="logo-text gradient-text">Aura</span>
+      </div>
+      <button class="btn btn-secondary btn-icon" id="mobile-menu-trigger" aria-label="Menu">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>
+      </button>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="hidden">
+      <div class="sidebar-header">
+        <div class="logo-icon">A</div>
+        <span class="logo-text gradient-text">Aura</span>
+      </div>
+
+      <nav class="sidebar-menu">
+        <div class="sidebar-menu-category">Main</div>
+        
+        <div class="menu-item active" data-view="dashboard" id="nav-dashboard">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"></rect><rect x="14" y="3" width="7" height="5" rx="1"></rect><rect x="14" y="12" width="7" height="9" rx="1"></rect><rect x="3" y="16" width="7" height="5" rx="1"></rect></svg>
+          Dashboard
+        </div>
+        
+        <div class="menu-item" data-view="upload" id="nav-upload">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          Chat Upload Center
+        </div>
+
+        <div class="menu-item" data-view="analysis" id="nav-analysis">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+          Analyzer Reports
+        </div>
+
+        <div class="sidebar-menu-category">Coaching Modules</div>
+
+        <div class="menu-item" data-view="reality-check" id="nav-reality-check">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          Reality Check Engine
+        </div>
+
+        <div class="menu-item" data-view="simulator" id="nav-simulator">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          Conversation Sim
+        </div>
+
+        <div class="menu-item" data-view="growth" id="nav-growth">
+          <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+          Personal Growth Hub
+        </div>
+
+        <div class="sidebar-menu-category">Preferences</div>
+        
+        <div class="menu-item" data-view="settings" id="nav-settings">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          Settings
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile-preview" id="profile-trigger">
+          <div class="user-avatar" id="avatar-letters">US</div>
+          <div class="user-info-text">
+            <span class="user-name" id="profile-display-name">User</span>
+            <span class="user-status" id="profile-display-status">Growth Mode</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Panel -->
+    <main id="main-content">
+
+      <!-- ==================== 1. LANDING / WELCOME VIEW ==================== -->
+      <section id="view-landing" class="animate-fade-in">
+        <div class="landing-hero">
+          <div class="badge badge-primary" style="margin-bottom: 1.5rem;">AI Relationship & Emotional Intelligence Engine</div>
+          <h1>Decipher Communication. <br><span class="gradient-text">Grow Together.</span></h1>
+          <p>Aura analyzes your relationship dynamics, offers brutally honest reality checks, simulates conversations, and helps you establish healthy emotional boundaries.</p>
+          <div style="display:flex; justify-content:center; gap:1rem;">
+            <button class="btn btn-primary" id="btn-landing-start">Get Started</button>
+            <button class="btn btn-secondary" id="btn-landing-auth">Log In</button>
+          </div>
+        </div>
+
+        <div class="landing-features">
+          <div class="landing-feature-card glass-panel">
+            <div class="landing-feature-icon">🔍</div>
+            <h3>Deep Chat Analytics</h3>
+            <p>Import text, paste chats, or upload screenshots to review sentiment analysis, trust indicators, and effort balances.</p>
+          </div>
+          <div class="landing-feature-card glass-panel">
+            <div class="landing-feature-icon">⚡</div>
+            <h3>Reality Check Engine</h3>
+            <p>Toggle Straight-Answer Mode for feedback free of sugarcoating. Identify red flags and translate angry drafts into clean boundaries.</p>
+          </div>
+          <div class="landing-feature-card glass-panel">
+            <div class="landing-feature-icon">🎭</div>
+            <h3>Outcome Simulator</h3>
+            <p>Test draft responses in our chat simulator before sending. Predict defensiveness and calculate positive-outcome ratios.</p>
+          </div>
+        </div>
+
+        <div class="landing-privacy-box glass-panel">
+          <div style="font-size: 2.5rem;">🔒</div>
+          <div>
+            <h3>Our Privacy Promise</h3>
+            <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 0.25rem;">Your data stays yours. Aura supports complete Local Processing Mode. All analytics, chat uploads, and diary logs are run locally inside your browser cache and can be wiped instantly with one click.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== 2. AUTHENTICATION VIEW ==================== -->
+      <section id="view-auth" class="hidden animate-fade-in">
+        <div class="auth-container glass-panel">
+          <div class="auth-tabs">
+            <div class="auth-tab active" id="tab-login">Log In</div>
+            <div class="auth-tab" id="tab-register">Sign Up</div>
+          </div>
+
+          <!-- Basic login/signup form -->
+          <form id="auth-form" onsubmit="event.preventDefault();">
+            <div class="form-group">
+              <label for="auth-email">Email Address</label>
+              <input type="email" id="auth-email" class="form-input" placeholder="name@domain.com" required value="demo@aura.ai">
+            </div>
+            <div class="form-group">
+              <label for="auth-password">Password</label>
+              <input type="password" id="auth-password" class="form-input" placeholder="••••••••" required value="password123">
+            </div>
+            
+            <!-- Extra parameters for Multi-Factor Authentication Simulation -->
+            <div id="mfa-section" class="hidden" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+              <div class="form-group">
+                <label for="auth-mfa">MFA Verification Code (Sent to your device)</label>
+                <div style="display:flex; gap:0.5rem;">
+                  <input type="text" id="auth-mfa" class="form-input" placeholder="123456" maxlength="6">
+                  <button type="button" class="btn btn-secondary" id="btn-resend-mfa">Resend</button>
+                </div>
+                <small style="color:var(--text-secondary); margin-top: 0.25rem; display:block;">Enter any 6-digit code to simulate device verification.</small>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;" id="btn-auth-submit">Access Dashboard</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- ==================== 3. ONBOARDING VIEW ==================== -->
+      <section id="view-onboarding" class="hidden animate-fade-in">
+        <div class="onboarding-wizard glass-panel">
+          <div class="wizard-steps">
+            <div class="wizard-progress-bar" id="wizard-progress" style="width: 0%;"></div>
+            <div class="wizard-step-node active" data-step="1">1</div>
+            <div class="wizard-step-node" data-step="2">2</div>
+            <div class="wizard-step-node" data-step="3">3</div>
+            <div class="wizard-step-node" data-step="4">4</div>
+            <div class="wizard-step-node" data-step="5">5</div>
+          </div>
+
+          <form id="onboarding-form" onsubmit="event.preventDefault();">
+            <!-- Step 1: Goals -->
+            <div class="wizard-step-content" id="step-1">
+              <h2>What brings you to Aura?</h2>
+              <p style="color:var(--text-secondary); margin-bottom: 1.5rem;">Select your primary coaching goal.</p>
+              <div class="wizard-options-grid">
+                <div class="wizard-option-card selected" data-value="conflict">Resolve Recurring Conflicts</div>
+                <div class="wizard-option-card" data-value="boundaries">Build Emotional Boundaries</div>
+                <div class="wizard-option-card" data-value="communication">Improve Communication Style</div>
+                <div class="wizard-option-card" data-value="growth">Self-Reflection & EQ Growth</div>
+              </div>
+            </div>
+
+            <!-- Step 2: Communication Preferences -->
+            <div class="wizard-step-content hidden" id="step-2">
+              <h2>Your Communication Profile</h2>
+              <p style="color:var(--text-secondary); margin-bottom: 1.5rem;">How do you naturally handle heavy conversations?</p>
+              <div class="wizard-options-grid">
+                <div class="wizard-option-card selected" data-value="words">Over-explaining & Texting</div>
+                <div class="wizard-option-card" data-value="avoid">Needing space to cool off</div>
+                <div class="wizard-option-card" data-value="immediate">Resolving things immediately</div>
+                <div class="wizard-option-card" data-value="passive">Shutting down (Withdrawal)</div>
+              </div>
+            </div>
+
+            <!-- Step 3: Relationship Status -->
+            <div class="wizard-step-content hidden" id="step-3">
+              <h2>What is your relationship status?</h2>
+              <p style="color:var(--text-secondary); margin-bottom: 1.5rem;">This shapes the phrasing of coaching recommendations.</p>
+              <div class="wizard-options-grid">
+                <div class="wizard-option-card selected" data-value="dating">Dating / In a Relationship</div>
+                <div class="wizard-option-card" data-value="complicated">It's Complicated</div>
+                <div class="wizard-option-card" data-value="single">Single & Personal Growth focus</div>
+                <div class="wizard-option-card" data-value="moving-on">Healing from a Breakup</div>
+              </div>
+            </div>
+
+            <!-- Step 4: Emotional Objectives -->
+            <div class="wizard-step-content hidden" id="step-4">
+              <h2>Select Emotional Targets</h2>
+              <p style="color:var(--text-secondary); margin-bottom: 1.5rem;">Areas you want the AI engine to monitor closely.</p>
+              <div class="wizard-options-grid">
+                <div class="wizard-option-card selected" data-value="anxiety">Reducing Relationship Anxiety</div>
+                <div class="wizard-option-card" data-value="codependency">Breaking Codependent Habits</div>
+                <div class="wizard-option-card" data-value="assertiveness">Enhancing Assertiveness</div>
+                <div class="wizard-option-card" data-value="attachment">Understanding Attachment Styles</div>
+              </div>
+            </div>
+
+            <!-- Step 5: Privacy Settings -->
+            <div class="wizard-step-content hidden" id="step-5">
+              <h2>Select Data Mode</h2>
+              <p style="color:var(--text-secondary); margin-bottom: 1.5rem;">Choose how your analytics are stored.</p>
+              <div class="wizard-options-grid" style="grid-template-columns: 1fr;">
+                <div class="wizard-option-card selected" data-value="local">
+                  <strong>Local-Only Vault (Recommended)</strong>
+                  <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem;">Chats, transcripts, and scores are processed completely inside this browser session. Data is encrypted using local caches and wiped instantly on logout.</p>
+                </div>
+                <div class="wizard-option-card" data-value="cloud">
+                  <strong>Cloud Sync Mode</strong>
+                  <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem;">Store encrypted logs in cloud caches for multi-device sync. (Simulated endpoint protection enabled).</p>
+                </div>
+              </div>
+              <div class="form-group" style="margin-top: 1.5rem;">
+                <label for="onboard-name">Enter your preferred Name / Nickname</label>
+                <input type="text" id="onboard-name" class="form-input" placeholder="e.g. Taylor" value="Alex">
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; margin-top:2.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+              <button type="button" class="btn btn-secondary" id="btn-onboard-back" style="visibility: hidden;">Back</button>
+              <button type="button" class="btn btn-primary" id="btn-onboard-next">Continue</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ==================== 4. DASHBOARD VIEW ==================== -->
+      <section id="view-dashboard" class="hidden animate-fade-in">
+        <div class="view-header">
+          <div>
+            <h2>Welcome Back, <span id="dash-username">Alex</span></h2>
+            <p>Here is your relationship wellness checklist and insight review.</p>
+          </div>
+          <!-- Straight-Answer Mode quick switch in header -->
+          <div class="mode-toggle-card glass-panel" id="dash-straight-toggle" style="margin-bottom: 0; padding: 0.5rem 1rem; border-radius: var(--radius-md);">
+            <span style="font-size: 0.85rem; font-weight:600; margin-right: 0.75rem; color: var(--accent);">Straight-Answer Mode</span>
+            <label class="switch">
+              <input type="checkbox" id="global-straight-switch">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="grid-3" style="margin-bottom: 1.5rem;">
+          <!-- Emotional Health Card -->
+          <div class="glass-panel score-card">
+            <div class="score-dial-container">
+              <svg class="score-dial-svg">
+                <defs>
+                  <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="var(--primary)"></stop>
+                    <stop offset="100%" stop-color="var(--secondary)"></stop>
+                  </linearGradient>
+                </defs>
+                <circle class="score-dial-bg" cx="70" cy="70" r="64"></circle>
+                <circle class="score-dial-fill" id="score-ring" cx="70" cy="70" r="64"></circle>
+              </svg>
+              <div class="score-dial-text">
+                <span class="score-value" id="score-text">78</span>
+                <div class="score-label">Score</div>
+              </div>
+            </div>
+            <div>
+              <h4>Emotional Health</h4>
+              <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem;">Overall relationship harmony index based on current chat analyses.</p>
+            </div>
+          </div>
+
+          <!-- Compatibility Summary -->
+          <div class="glass-panel" style="padding: 1.5rem;">
+            <h4 style="margin-bottom: 0.75rem;">Relationship Intelligence</h4>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
+              <span style="font-size: 0.9rem; color: var(--text-secondary)">Mutual Effort</span>
+              <span class="badge badge-success" id="dash-effort-status">Balanced (52%)</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
+              <span style="font-size: 0.9rem; color: var(--text-secondary)">Emotional Availability</span>
+              <span class="badge badge-primary">High</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size: 0.9rem; color: var(--text-secondary)">Attachment Index</span>
+              <span class="badge badge-warning" id="dash-attachment-status">Anxious-Avoidant</span>
+            </div>
+          </div>
+
+          <!-- Growth Roadmap Progress -->
+          <div class="glass-panel" style="padding: 1.5rem;">
+            <h4 style="margin-bottom: 0.75rem;">Personal Growth Hub</h4>
+            <div style="margin-bottom: 0.75rem;">
+              <div style="display:flex; justify-content:space-between; font-size: 0.85rem; margin-bottom: 0.25rem;">
+                <span style="color:var(--text-secondary);">Course Completed</span>
+                <span id="dash-course-progress-text">1 of 4 modules</span>
+              </div>
+              <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: var(--radius-full); overflow:hidden;">
+                <div style="width: 25%; height: 100%; background: var(--secondary);" id="dash-course-progress-bar"></div>
+              </div>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85rem; color:var(--text-secondary);">
+              <span>Daily Reflection Logged:</span>
+              <span id="dash-journal-count" class="badge badge-primary">0 Entries</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- Recent insights & active patterns -->
+          <div class="glass-panel" style="padding: 1.5rem;">
+            <h3 style="margin-bottom: 1rem; display:flex; align-items:center; gap:0.5rem;">📊 Active Behavioral Patterns</h3>
+            <div id="dashboard-patterns-list">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- Recommended Actions -->
+          <div class="glass-panel" style="padding: 1.5rem;">
+            <h3 style="margin-bottom: 1rem; display:flex; align-items:center; gap:0.5rem;">🎯 Recommended Action Steps</h3>
+            <div id="dashboard-actions-list">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== 5. CHAT UPLOAD CENTER VIEW ==================== -->
+      <section id="view-upload" class="hidden animate-fade-in">
+        <div class="view-header">
+          <div>
+            <h2>Chat Upload Center</h2>
+            <p>Securely upload text messages, screenshots, or transcripts to perform a communication health check.</p>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- Left side: upload controls -->
+          <div class="expand-detail-container">
+            <div class="glass-panel dropzone" id="chat-dropzone">
+              <div class="dropzone-icon">📤</div>
+              <h3>Drag & Drop Files Here</h3>
+              <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">Supports WhatsApp export TXT files, JSON logs, or Screenshot images (PNG/JPG)</p>
+              <div style="margin-top: 1rem;">
+                <span class="btn btn-secondary">Choose File</span>
+                <input type="file" id="chat-file-input" style="display:none;" accept=".txt,.json,image/*">
+              </div>
+              <div id="upload-file-status" style="margin-top: 1rem; font-size:0.9rem; color:var(--success);" class="hidden">
+                ✓ File parsed successfully!
+              </div>
+            </div>
+
+            <!-- Pre-loaded sample conversations for testing -->
+            <div class="glass-panel" style="padding: 1.5rem;">
+              <h4 style="margin-bottom: 0.75rem;">Analyze Sample Conversation (Quick Demo)</h4>
+              <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom: 1rem;">Select a pre-configured conversation export to immediately evaluate Aura's parser capabilities.</p>
+              <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                <button class="btn btn-secondary" style="justify-content: flex-start;" id="btn-sample-anxious">
+                  💬 Sample 1: Evening Conflict (Anxious vs Avoidant)
+                </button>
+                <button class="btn btn-secondary" style="justify-content: flex-start;" id="btn-sample-passive">
+                  💬 Sample 2: Weekend Chore Dispute (Passive-Aggressive)
+                </button>
+                <button class="btn btn-secondary" style="justify-content: flex-start;" id="btn-sample-secure">
+                  💬 Sample 3: Boundaries Discussion (Healthy Resolution)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right side: Paste area -->
+          <div class="glass-panel paste-box" style="margin-top:0; padding:1.5rem; display:flex; flex-direction:column;">
+            <h3 style="margin-bottom: 0.5rem;">Paste Conversation Transcript</h3>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1rem;">Paste directly from messaging apps. Use format "Name: message text", one per line.</p>
+            <textarea id="pasted-chat-text" class="form-textarea" style="flex:1; min-height: 250px; font-family: monospace; font-size:0.9rem; background:rgba(0,0,0,0.2);" placeholder="Taylor: Why haven't you replied all day?&#10;Alex: I was in meetings, I told you that.&#10;Taylor: It takes 5 seconds to send a text. You are ignoring me."></textarea>
+            <button class="btn btn-primary" style="margin-top: 1rem; align-self: flex-end;" id="btn-analyze-paste">Analyze Conversation</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== 6. CONVERSATION ANALYSIS VIEW ==================== -->
+      <section id="view-analysis" class="hidden animate-fade-in">
+        <div class="view-header">
+          <div>
+            <h2>Conversation Health Report</h2>
+            <p id="analysis-report-title">Analyzing chat logs between Alex and Taylor</p>
+          </div>
+          <button class="btn btn-secondary" id="btn-export-pdf">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.25rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Export Summary (PDF)
+          </button>
+        </div>
+
+        <div class="analysis-tabs">
+          <button class="analysis-tab-btn active" data-tab="summary">Overview</button>
+          <button class="analysis-tab-btn" data-tab="tone">Tone Analysis</button>
+          <button class="analysis-tab-btn" data-tab="dynamics">Dynamics & Balance</button>
+          <button class="analysis-tab-btn" data-tab="flags">Red & Green Flags</button>
+        </div>
+
+        <!-- Tab 1: Overview Summary -->
+        <div class="analysis-tab-content" id="analysis-tab-summary">
+          <div class="grid-3" style="margin-bottom:1.5rem;">
+            <div class="glass-panel score-card" style="padding:1.5rem;">
+              <div class="score-dial-container">
+                <svg class="score-dial-svg">
+                  <circle class="score-dial-bg" cx="70" cy="70" r="64"></circle>
+                  <circle class="score-dial-fill" id="report-score-ring" cx="70" cy="70" r="64"></circle>
+                </svg>
+                <div class="score-dial-text">
+                  <span class="score-value" id="report-score-val">82</span>
+                  <div class="score-label">Harmony</div>
+                </div>
+              </div>
+              <div>
+                <h5>Report Score</h5>
+                <p style="font-size:0.75rem; color:var(--text-secondary);">Indicates the overall quality of conflict resolution.</p>
+              </div>
+            </div>
+
+            <div class="glass-panel" style="padding:1.5rem;">
+              <h5>Conflict Urgency</h5>
+              <div id="report-urgency-badge" style="margin-top:0.5rem; display:inline-block;"></div>
+              <p style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.75rem;" id="report-urgency-description">Analysis detects low levels of defensive friction.</p>
+            </div>
+
+            <div class="glass-panel" style="padding:1.5rem;">
+              <h5>Primary Escalation Trigger</h5>
+              <p style="font-size:1.1rem; font-weight:600; margin-top:0.5rem;" id="report-trigger-text">Delayed Responses</p>
+              <p style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.25rem;">This trigger is responsible for 60% of emotional escalation in this session.</p>
+            </div>
+          </div>
+
+          <div class="glass-panel" style="padding: 2rem; margin-bottom: 1.5rem;">
+            <h3>Executive Summary</h3>
+            <p style="margin-top:0.75rem; color:var(--text-secondary);" id="report-summary-text">
+              The conversation demonstrates an anxious-avoidant pursuit dynamic. Alex (Anxious style) is seeking immediate reassurance, while Taylor (Avoidant style) is withdrawing in response to perceived criticism. This results in an escalatory loop that resolves only when one partner yields entirely.
+            </p>
+          </div>
+        </div>
+
+        <!-- Tab 2: Tone Analysis -->
+        <div class="analysis-tab-content hidden" id="analysis-tab-tone">
+          <div class="grid-2">
+            <!-- User Tone Chart -->
+            <div class="glass-panel" style="padding: 1.5rem;">
+              <h4 id="report-user-tone-title">Alex's Emotional Tone</h4>
+              <div class="bar-chart-container" id="report-user-tone-chart">
+                <!-- Dynamically generated bars -->
+              </div>
+            </div>
+
+            <!-- Partner Tone Chart -->
+            <div class="glass-panel" style="padding: 1.5rem;">
+              <h4 id="report-partner-tone-title">Taylor's Emotional Tone</h4>
+              <div class="bar-chart-container" id="report-partner-tone-chart">
+                <!-- Dynamically generated bars -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Dynamics & Balance -->
+        <div class="analysis-tab-content hidden" id="analysis-tab-dynamics">
+          <div class="grid-2">
+            <div class="glass-panel" style="padding: 1.5rem; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
+              <h4>Conversation Effort Balance</h4>
+              <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom: 1.5rem;">Measured by word count and frequency of messaging initiation.</p>
+              
+              <!-- SVG Effort Balance visualizer -->
+              <div style="position:relative; width: 220px; height: 120px; margin-bottom:1rem;">
+                <svg width="220" height="120">
+                  <path d="M 20,90 Q 110,20 200,90" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="12" stroke-linecap="round"></path>
+                  <path d="M 20,90 Q 110,20 200,90" id="effort-scale-path" fill="none" stroke="url(#scoreGradient)" stroke-width="12" stroke-linecap="round" stroke-dasharray="290" stroke-dashoffset="145"></path>
+                  <!-- Scale Indicator pointer -->
+                  <circle cx="110" cy="55" r="8" fill="var(--accent)" id="effort-scale-pointer"></circle>
+                </svg>
+                <div style="position:absolute; bottom:10px; width:100%; display:flex; justify-content:space-between; font-size:0.8rem; font-weight:600; color:var(--text-secondary);">
+                  <span id="effort-label-left">Alex (50%)</span>
+                  <span id="effort-label-right">Taylor (50%)</span>
+                </div>
+              </div>
+              <p style="font-weight: 500;" id="effort-summary-msg">Effort is perfectly distributed in this interaction.</p>
+            </div>
+
+            <div class="glass-panel" style="padding: 1.5rem;">
+              <h4>Trust & Compatibility Analysis</h4>
+              <div style="margin-top: 1rem; display:flex; flex-direction:column; gap:1rem;">
+                <div>
+                  <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:0.25rem;">
+                    <span>Trust Safety Index</span>
+                    <span id="report-trust-val">74%</span>
+                  </div>
+                  <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:3px; overflow:hidden;">
+                    <div style="width:74%; height:100%; background:var(--primary);" id="report-trust-bar"></div>
+                  </div>
+                </div>
+                <div>
+                  <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:0.25rem;">
+                    <span>Emotional Vulnerability Level</span>
+                    <span id="report-vuln-val">60%</span>
+                  </div>
+                  <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:3px; overflow:hidden;">
+                    <div style="width:60%; height:100%; background:var(--secondary);" id="report-vuln-bar"></div>
+                  </div>
+                </div>
+                <div>
+                  <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:0.25rem;">
+                    <span>Defensiveness Level</span>
+                    <span id="report-defense-val">45%</span>
+                  </div>
+                  <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:3px; overflow:hidden;">
+                    <div style="width:45%; height:100%; background:var(--danger);" id="report-defense-bar"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 4: Red & Green Flags -->
+        <div class="analysis-tab-content hidden" id="analysis-tab-flags">
+          <div class="grid-2">
+            <div>
+              <h3 style="color:var(--danger); margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">🚩 Detected Red Flags</h3>
+              <div id="report-red-flags">
+                <!-- JS inserted flags -->
+              </div>
+            </div>
+            <div>
+              <h3 style="color:var(--success); margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">🟢 Detected Green Flags</h3>
+              <div id="report-green-flags">
+                <!-- JS inserted flags -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== 7. REALITY CHECK ENGINE VIEW ==================== -->
+      <section id="view-reality-check" class="hidden animate-fade-in">
+        <div class="view-header">
+          <div>
+            <h2>Reality Check Engine</h2>
+            <p>Get evidence-based insights, reveal blind spots, and translate emotional reactions into clear boundaries.</p>
+          </div>
+        </div>
+
+        <!-- Straight Answer Mode Toggle Box -->
+        <div class="glass-panel mode-toggle-card straight-answer-active" id="reality-straight-toggle" style="margin-bottom: 2rem; padding:1.25rem 2rem;">
+          <div>
+            <h3>Straight-Answer Mode</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top:0.25rem;">Disable therapeutic sugarcoating. Aura will state findings with brutal, objective honesty.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="reality-straight-switch" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="grid-2">
+          <!-- Brutally Honest Analysis Console -->
+          <div class="glass-panel reality-panel" style="padding:1.5rem; display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <h3 style="color: var(--accent); margin-bottom:0.75rem;">Objective Assessment</h3>
+              <p style="font-size:0.95rem; color:var(--text-primary); font-family: monospace; white-space: pre-line;" id="reality-talk-content">
+                Loading assessment... Please upload a conversation first.
+              </p>
+            </div>
+            <div style="margin-top:1.5rem; border-top:1px solid var(--border-color); padding-top:1rem;">
+              <h5 style="margin-bottom:0.5rem;">Responsibility Distribution Slider</h5>
+              <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.25rem;">
+                <span id="slider-user-label">Alex (50%)</span>
+                <span id="slider-partner-label">Taylor (50%)</span>
+              </div>
+              <input type="range" min="0" max="100" value="50" class="reality-rating-slider" id="reality-responsibility-slider" disabled>
+              <small style="color:var(--text-muted); display:block; margin-top:0.5rem; text-align:center;">Assessed accountability split based on conversation triggers.</small>
+            </div>
+          </div>
+
+          <!-- Boundary Translation Widget -->
+          <div class="glass-panel" style="padding:1.5rem; display:flex; flex-direction:column;">
+            <h3>Boundary & Response Translator</h3>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom: 1rem;">Draft a high-emotion response. We will translate it into a constructive, boundary-respecting text.</p>
+            
+            <div class="form-group" style="flex:1; display:flex; flex-direction:column;">
+              <label for="boundary-draft-input">Draft Message (Emotional / High Reactivity)</label>
+              <textarea id="boundary-draft-input" class="form-textarea" style="flex:1; min-height: 120px;" placeholder="e.g. Fine, don't talk to me. You always do this and ignore me for hours, it's so selfish."></textarea>
+            </div>
+
+            <div style="text-align: center; margin: 0.5rem 0;">
+              <button class="btn btn-secondary btn-icon" id="btn-translate-boundary" style="border-radius: var(--radius-full); width:48px; height:48px;">
+                ✨
+              </button>
+            </div>
+
+            <div class="form-group" style="flex:1; display:flex; flex-direction:column;">
+              <label>Translated Constructive Boundary Suggestion</label>
+              <div id="boundary-translation-output" class="form-input" style="flex:1; min-height: 120px; background:rgba(168,85,247,0.05); border-color:var(--secondary); overflow-y:auto; color:#d8b4fe; font-style:italic;">
+                Translations will appear here. Enter text and press the sparkles button.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== 8. CONVERSATION SIMULATOR VIEW ==================== -->
+      <section id="view-simulator" class="hidden animate-fade-in">
+        <div class="view-header">
+          <div>
+            <h2>Conversation Simulator</h2>
+            <p>Practice navigating difficult scenarios. Aura simulates your partner's responses and predicts outcomes.</p>
+          </div>
+          <button class="btn btn-secondary" id="btn-reset-simulator">Reset Simulator</button>
+        </div>
+
+        <div class="grid-2">
+          <!-- Chat interface panel -->
+          <div class="simulator-layout">
+            <div class="simulator-chat-area" id="sim-chat-box">
+              <!-- JS rendered bubbles -->
+            </div>
+            
+            <div class="simulator-input-area">
+              <input type="text" id="sim-input-text" class="form-input" style="background:rgba(0,0,0,0.3);" placeholder="Type a mock response to test...">
+              <button class="btn btn-primary" id="btn-sim-send">Send</button>
+            </div>
+          </div>
+
+          <!-- Outcome Prediction Panel -->
+          <div class="expand-detail-container">
+            <div class="glass-panel" style="padding: 1.5rem;">
+              <h3>Live Outcome Prediction</h3>
+              <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom: 1.5rem;">Calculated in real-time as you compose and send messages.</p>
+
+              <div class="prediction-radial-container">
+                <div class="radial-progress-bar">
+                  <div style="font-size:1.75rem; font-weight:800; color:var(--success);" id="predict-success-val">--%</div>
+                  <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase; margin-top:0.25rem;">Positive Resolution</div>
+                </div>
+                <div class="radial-progress-bar">
+                  <div style="font-size:1.75rem; font-weight:800; color:var(--warning);" id="predict-defense-val">--%</div>
+                  <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase; margin-top:0.25rem;">Defensiveness Risk</div>
+                </div>
+                <div class="radial-progress-bar">
+                  <div style="font-size:1.75rem; font-weight:800; color:var(--danger);" id="predict-withdrawal-val">--%</div>
+                  <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase; margin-top:0.25rem;">Withdrawal Risk</div>
+                </div>
+              </div>
+
+              <div id="sim-prediction-alert" class="insight-item" style="margin-top:2rem; margin-bottom:0;">
+                Start typing messages to begin prediction scoring.
+              </div>
+            </div>
+
+            <!-- Advice block -->
+            <div class="glass-panel" style="padding: 1.5rem;">
+              <h4 style="color:var(--secondary); margin-bottom:0.5rem;">💡 Simulator Advice</h4>
+              <p style="font-size:0.9rem; color:var(--text-secondary);" id="sim-advice-text">
+                Try using an "I" statement (e.g. "I feel anxious when we go hours without talking because...") instead of a "You" statement to lower your partner's predicted defensiveness.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== 9. PERSONAL GROWTH HUB VIEW ==================== -->
+      <section id="view-growth" class="hidden animate-fade-in">
+        <div class="view-header">
+          <div>
+            <h2>Personal Growth Hub</h2>
+            <p>Build communication tools, increase self-esteem, and track emotional triggers.</p>
+          </div>
+        </div>
+
+        <div class="grid-3" style="margin-bottom: 2rem;">
+          <!-- Course Card 1: EQ -->
+          <div class="glass-panel course-card" data-course="eq" id="course-eq">
+            <span class="badge badge-primary course-badge">EQ</span>
+            <h3 style="margin-top:1.5rem; margin-bottom:0.5rem;">Emotional Intelligence</h3>
+            <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:1.5rem;">Learn to recognize and regulate triggers and emotional impulses.</p>
+            <div class="course-progress" style="width: 0%;" id="progress-eq"></div>
+          </div>
+
+          <!-- Course Card 2: Boundaries -->
+          <div class="glass-panel course-card" data-course="boundaries" id="course-boundaries">
+            <span class="badge badge-secondary course-badge">Boundaries</span>
+            <h3 style="margin-top:1.5rem; margin-bottom:0.5rem;">Boundary Development</h3>
+            <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:1.5rem;">Learn how to define, express, and hold healthy personal space boundaries.</p>
+            <div class="course-progress" style="width: 0%;" id="progress-boundaries"></div>
+          </div>
+
+          <!-- Course Card 3: Communication -->
+          <div class="glass-panel course-card" data-course="comm" id="course-comm">
+            <span class="badge badge-success course-badge">Skills</span>
+            <h3 style="margin-top:1.5rem; margin-bottom:0.5rem;">Healthy Communication</h3>
+            <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:1.5rem;">Master the art of de-escalation, assertive speaking, and active listening.</p>
+            <div class="course-progress" style="width: 0%;" id="progress-comm"></div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- Daily Reflective Journal -->
+          <div class="glass-panel" style="padding:1.5rem; display:flex; flex-direction:column;">
+            <h3>Daily Reflective Journal</h3>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom: 1.25rem;">Reflecting on relationships helps map emotional triggers over time.</p>
+            
+            <div id="journal-question-box" class="insight-item" style="border-left-color: var(--secondary); margin-bottom: 1.25rem;">
+              <strong>Question of the Day:</strong>
+              <p style="font-size: 0.9rem; margin-top: 0.25rem;" id="journal-daily-prompt">What boundary did you struggle to express clearly this week?</p>
+            </div>
+
+            <textarea id="journal-entry-text" class="form-textarea" style="flex:1; min-height: 120px; margin-bottom: 1rem;" placeholder="Write your reflection here..."></textarea>
+            <button class="btn btn-primary" style="align-self: flex-end;" id="btn-save-journal">Save Entry</button>
+            
+            <!-- Journal list container -->
+            <div style="margin-top: 1.5rem; max-height:220px; overflow-y:auto;" id="journal-entries-list">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- Course Reader Panel (Displays content when course card is clicked) -->
+          <div class="glass-panel" style="padding:1.5rem;" id="course-reader-panel">
+            <div id="course-reader-empty" class="text-center" style="padding: 4rem 1rem;">
+              <span style="font-size: 3rem;">📖</span>
+              <h3 style="margin-top:1rem;">Select a Growth Course</h3>
+              <p style="color:var(--text-secondary); font-size:0.9rem; margin-top:0.25rem;">Click on any course card above to begin lessons and build relationship skills.</p>
+            </div>
+            
+            <div id="course-reader-content" class="hidden">
+              <h3 id="course-lesson-title">Lesson Title</h3>
+              <span class="badge badge-primary" id="course-lesson-badge" style="margin: 0.5rem 0 1rem 0;">Emotional Intelligence</span>
+              
+              <!-- Mock Audio Meditation Player -->
+              <div class="audio-player-mock">
+                <div class="audio-controls" id="btn-audio-toggle">▶ Play Audio Guide</div>
+                <div class="audio-track-line">
+                  <div class="audio-track-progress"></div>
+                </div>
+                <span style="font-size:0.75rem; color:var(--text-secondary)">03:15</span>
+              </div>
+
+              <div style="font-size:0.95rem; color:var(--text-secondary); margin-bottom: 1.5rem;" id="course-lesson-body">
+                Lesson body content...
+              </div>
+
+              <div style="display:flex; justify-content:space-between; border-top:1px solid var(--border-color); padding-top:1rem;">
+                <button class="btn btn-secondary" id="btn-lesson-prev">Previous</button>
+                <button class="btn btn-primary" id="btn-lesson-complete">Mark Complete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== 10. SETTINGS VIEW ==================== -->
+      <section id="view-settings" class="hidden animate-fade-in">
+        <div class="view-header">
+          <div>
+            <h2>Settings & Privacy</h2>
+            <p>Control encryption modules, download audits, or reset app settings.</p>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- Profile & Security Config -->
+          <div class="glass-panel" style="padding: 1.5rem;">
+            <h3>Security Options</h3>
+            <div style="margin-top: 1.5rem; display:flex; flex-direction:column; gap:1.25rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <h4 style="font-size: 0.95rem;">End-to-End Local Encryption</h4>
+                  <p style="font-size:0.8rem; color:var(--text-secondary);">Force secure local storage hashing for files.</p>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="settings-local-encrypt" checked>
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <h4 style="font-size: 0.95rem;">MFA Login Requirement</h4>
+                  <p style="font-size:0.8rem; color:var(--text-secondary);">Enforce simulated multi-factor authentication codes.</p>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="settings-mfa-req">
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label for="settings-mock-key">Personal AI Core (Mock API Key override)</label>
+                <input type="password" id="settings-mock-key" class="form-input" placeholder="sk-proj-••••••••••••••••" value="sk-auramockkey1239840294812">
+              </div>
+            </div>
+          </div>
+
+          <!-- Data management controls -->
+          <div class="glass-panel" style="padding: 1.5rem; display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <h3>Data Vault Controls</h3>
+              <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem; margin-bottom:1.5rem;">Aura stores all calculations in the browser database. You have full ownership of your metrics.</p>
+
+              <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                <button class="btn btn-secondary" style="justify-content:flex-start;" id="btn-export-settings-data">
+                  📥 Export Data Audit (JSON format)
+                </button>
+                <button class="btn btn-danger" style="justify-content:flex-start;" id="btn-clear-settings-data">
+                  ⚠️ Clear Local Cache & Reset Onboarding
+                </button>
+              </div>
+            </div>
+
+            <!-- Audit Logs snippet -->
+            <div style="margin-top: 1.5rem; border-top:1px solid var(--border-color); padding-top: 1rem;">
+              <h4 style="font-size:0.9rem; margin-bottom:0.5rem;">Security Audit Logs</h4>
+              <div style="background:rgba(0,0,0,0.3); border-radius:var(--radius-md); padding:0.75rem; font-family:monospace; font-size:0.75rem; color:var(--text-secondary); max-height:100px; overflow-y:auto;" id="settings-audit-logs">
+                [2026-06-22 17:30] Session initialized.<br>
+                [2026-06-22 17:31] Encryption key generated.<br>
+                [2026-06-22 17:32] Security modules checked OK.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CRISIS & HIGH-RISK WARNING (Sticky Alert widget overlay, hidden by default) -->
+      <div id="crisis-alert-banner" class="hidden" style="position:fixed; bottom:20px; right:20px; left:20px; max-width:800px; margin:0 auto; z-index:999; background:rgba(239, 68, 68, 0.95); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.2); border-radius:var(--radius-md); padding:1rem 1.5rem; display:flex; justify-content:space-between; align-items:center; box-shadow:0 10px 30px rgba(239,68,68,0.5); animation:fadeIn 0.3s ease;">
+        <div style="display:flex; align-items:center; gap:0.75rem; color:white;">
+          <span style="font-size:1.5rem;">⚠️</span>
+          <div>
+            <strong style="display:block;">Crisis Distress Detected</strong>
+            <span style="font-size:0.85rem; opacity:0.9;">Your message triggers suggest heightened emotional distress. Please review emergency resources or call 988.</span>
+          </div>
+        </div>
+        <div style="display:flex; gap:0.5rem;">
+          <button class="btn btn-secondary" style="background:rgba(255,255,255,0.15); border:none; padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="window.open('https://988lifeline.org/')">988 Hotline</button>
+          <button class="btn btn-secondary" style="background:transparent; border:none; padding:0.4rem; font-size:0.8rem;" id="btn-close-crisis-banner">✕</button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/engines.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
