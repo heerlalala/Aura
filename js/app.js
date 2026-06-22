@@ -700,12 +700,20 @@ const app = {
     const petal = document.createElement('div');
     petal.className = 'sakura-petal';
     
-    const left = Math.random() * 100;
+    // Bias 70% of petals to start near the top-left where the background branch stretches
+    let left;
+    if (Math.random() < 0.7) {
+      left = Math.random() * 35; // 0% to 35% left
+    } else {
+      left = Math.random() * 100; // 0% to 100% left
+    }
+    
     const delay = Math.random() * 10;
     const duration = 8 + Math.random() * 8;
     const size = 6 + Math.random() * 10;
     
     petal.style.left = `${left}%`;
+    petal.style.top = `-20px`; // Start just above screen boundary
     petal.style.width = `${size}px`;
     petal.style.height = `${size}px`;
     petal.style.animationDelay = `${delay}s`;
