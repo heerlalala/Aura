@@ -737,3 +737,31 @@ input:checked + .slider:before {
   background: var(--secondary);
   border-radius: var(--radius-full);
 }
+
+/* Falling Sakura Petals Animation */
+.sakura-petal {
+  position: absolute;
+  background: linear-gradient(135deg, #ffe5ec 0%, #ffb5a7 100%);
+  border-radius: 15% 55% 55% 55% / 15% 15% 55% 55%; /* Petal leaf shape */
+  pointer-events: none;
+  animation: fall-and-drift 8s linear infinite;
+  transform-origin: left top;
+  z-index: 0;
+}
+
+@keyframes fall-and-drift {
+  0% {
+    transform: translateY(-20px) translateX(0) rotate(0deg) scale(0.8);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.7;
+  }
+  90% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(105vh) translateX(120px) rotate(270deg) scale(0.5);
+    opacity: 0;
+  }
+}

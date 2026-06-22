@@ -40,6 +40,7 @@ const app = {
       this.switchView('landing');
     }
     
+    this.startSakuraFalling();
     this.logAudit("Aura Engine initialized successfully.");
   },
 
@@ -678,6 +679,41 @@ const app = {
       auraUI.renderSimulator(this.state);
       this.logAudit(`Simulator generated partner response: "${replyText}"`);
     }, 1500);
+  },
+
+  startSakuraFalling: function() {
+    const container = document.createElement('div');
+    container.id = 'sakura-falling-container';
+    container.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; z-index: 0;';
+    
+    const landing = document.getElementById('view-landing');
+    if (!landing) return;
+    
+    landing.style.position = 'relative';
+    landing.appendChild(container);
+
+    const petalCount = 15;
+    for (let i = 0; i < petalCount; i++) {
+      this.spawnPetal(container);
+    }
+  },
+
+  spawnPetal: function(container) {
+    const petal = document.createElement('div');
+    petal.className = 'sakura-petal';
+    
+    const left = Math.random() * 100;
+    const delay = Math.random() * 8;
+    const duration = 6 + Math.random() * 6;
+    const size = 6 + Math.random() * 8;
+    
+    petal.style.left = `${left}%`;
+    petal.style.width = `${size}px`;
+    petal.style.height = `${size}px`;
+    petal.style.animationDelay = `${delay}s`;
+    petal.style.animationDuration = `${duration}s`;
+    
+    container.appendChild(petal);
   }
 };
 
