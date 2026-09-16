@@ -211,44 +211,44 @@ const auraEngines = {
   generateRealityCheck: function(analysis, straightAnswerMode) {
     if (straightAnswerMode) {
       // Brutally honest evaluation
-      let assessment = `**Reality Check Console (Straight-Answer Mode ACTIVE)**\n\n`;
+      let assessment = `⚡ **REALITY CHECK (Straight-Answer Mode ACTIVE)**\n\n`;
       
       if (analysis.harmonyScore < 50) {
-        assessment += `🚨 **The Verdict:** This interaction is highly toxic and unproductive. You both are speaking to defend yourselves, not to connect. \n\n`;
+        assessment += `🚨 **The Verdict:** This conversation is toxic and exhausting. You're both texting to defend your ego rather than connect.\n\n`;
       } else if (analysis.harmonyScore < 75) {
-        assessment += `⚠️ **The Verdict:** You are caught in a classic pursue-withdraw pattern. The conversation isn't completely broken, but you are walking on eggshells.\n\n`;
+        assessment += `⚠️ **The Verdict:** Classic pursue-withdraw trap. One of you is chasing for answers, and the other is running for cover.\n\n`;
       } else {
-        assessment += `✅ **The Verdict:** Excellent. This dialogue displays high emotional maturity. You are resolving conflicts as teammates rather than opponents.\n\n`;
+        assessment += `✅ **The Verdict:** Solid dynamic. You're handling friction like teammates instead of opponents.\n\n`;
       }
 
       assessment += `🔍 **Hard Truths:**\n`;
       
       // Analyze User (Alex)
       if (analysis.userTones.Anxiety > 50) {
-        assessment += `- **You (${analysis.user})** are suffocating the conversation. Your anxiety-driven rapid fire texts ('always', 'never') are actively pushing ${analysis.partner} away. You are demanding validation rather than asking for connection.\n`;
+        assessment += `- **You (${analysis.user})** are suffocating the chat. Rapid-fire texts and absolute words ('always', 'never') actively push ${analysis.partner} away. State what you need directly without sending 10 follow-ups.\n`;
       } else if (analysis.userTones.Anger > 50) {
-        assessment += `- **You (${analysis.user})** are using passive-aggressive sarcasm. Sarcasm is emotional cowardice; state what you need directly instead of taking cheap jabs.\n`;
+        assessment += `- **You (${analysis.user})** are using passive-aggressive sarcasm. Jabs like 'My hero' or 'I'll just do it myself' are cheap shots. Say what you need directly.\n`;
       } else {
-        assessment += `- **You (${analysis.user})** have remained relatively stable, but you need to hold your boundaries without apologizing for them.\n`;
+        assessment += `- **You (${analysis.user})** stayed fairly composed, but don't apologize for holding a clean boundary.\n`;
       }
 
       // Analyze Partner (Taylor)
       if (analysis.partnerTones.Avoidance > 50) {
-        assessment += `- **${analysis.partner}** is stonewalling you. Putting their phone in another room or ignoring texts is an escape hatch to avoid vulnerability. They are refusing to co-regulate with you.\n`;
+        assessment += `- **${analysis.partner}** is stonewalling you. Putting their phone away or ignoring texts is an escape hatch to dodge vulnerability. They're refusing to co-regulate.\n`;
       } else if (analysis.partnerTones.Anger > 50) {
-        assessment += `- **${analysis.partner}** is acting defensive and deflective. Instead of addressing the core issue, they are weaponizing their workload to make you feel guilty for asking for connection.\n`;
+        assessment += `- **${analysis.partner}** is acting defensive and deflecting. Instead of addressing the issue, they're weaponizing their workload to make you feel guilty.\n`;
       } else {
-        assessment += `- **${analysis.partner}** is demonstrating secure listening behaviors, but still displays anxiety under pressure.\n`;
+        assessment += `- **${analysis.partner}** showed secure listening traits, but still gets guarded under pressure.\n`;
       }
 
       return assessment;
     } else {
-      // Soft, encouraging coaching tone
-      let assessment = `**Relationship Coach Consultation**\n\n`;
-      assessment += `This session shows that you both deeply care about this relationship, but are currently experiencing a slight bump in communication style alignment.\n\n`;
-      assessment += `**Points of Growth:**\n`;
-      assessment += `- **For You:** Focus on expressing your needs gently using 'I' statements. Instead of centering on what ${analysis.partner} isn't doing, focus on what would make you feel supported.\n`;
-      assessment += `- **For ${analysis.partner}:** Encourage them to share when they are feeling overwhelmed early in the day, so their eventual need for quiet space doesn't feel like sudden withdrawal to you.`;
+      // Direct coaching tone
+      let assessment = `💡 **Coaching Breakdown**\n\n`;
+      assessment += `You both care about this connection, but your communication styles are clashing.\n\n`;
+      assessment += `**Smart Moves:**\n`;
+      assessment += `- **For You:** Use 'I' statements. Instead of calling out what ${analysis.partner} didn't do, state what would make you feel supported.\n`;
+      assessment += `- **For ${analysis.partner}:** Ask them to give a heads-up when they need space, so going quiet doesn't feel like sudden ghosting.`;
       return assessment;
     }
   },
@@ -257,20 +257,20 @@ const auraEngines = {
   translateBoundary: function(inputText) {
     const textLower = inputText.toLowerCase();
     
-    if (textLower.includes("always ignore") || textLower.includes("don't talk") || textLower.includes("never reply")) {
-      return "I notice we've gone a few hours without speaking. I feel anxious when we lose contact. Let me know when you have 10 minutes to check in tonight so I can plan my evening.";
+    if (textLower.includes("always ignore") || textLower.includes("don't talk") || textLower.includes("never reply") || textLower.includes("5 seconds")) {
+      return "I notice we've gone a few hours without speaking. I feel anxious when we lose touch during the day. Let me know when you have 10 minutes to check in tonight so I can plan my evening.";
     }
     
-    if (textLower.includes("selfish") || textLower.includes("only think of yourself") || textLower.includes("my job again")) {
-      return "I am feeling overwhelmed with keeping up with our shared chores. I need us to divide the kitchen duties more evenly. Can we set aside 10 minutes this evening to figure out a schedule that works for both of us?";
+    if (textLower.includes("selfish") || textLower.includes("only think of yourself") || textLower.includes("my job again") || textLower.includes("my hero")) {
+      return "I'm feeling overwhelmed with keeping up with shared chores. I need us to divide things more evenly. Can we set aside 10 minutes tonight to agree on a split that works for both of us?";
     }
     
-    if (textLower.includes("whatever") || textLower.includes("fine") || textLower.includes("don't care")) {
-      return "I feel overloaded by how this discussion is going and I can tell you are stressed too. I want to resolve this, but I need a 20-minute break to calm down before we continue talking.";
+    if (textLower.includes("whatever") || textLower.includes("fine") || textLower.includes("don't care") || textLower.includes("shut down")) {
+      return "I feel overloaded by how this discussion is going and I can tell we're both stressed. I want to solve this, but I need a 20-minute breather to cool down before we talk again.";
     }
 
     // Default general translation framework
-    return "I'm sharing this because our relationship is a priority for me. When [Action] occurs, I feel [Emotion]. Going forward, I would appreciate it if we could [Constructive Proposal]. Let's discuss if this works for you.";
+    return "I'm bringing this up because our relationship matters to me. When [action] happens, I feel [emotion]. Going forward, I'd appreciate it if we could [constructive proposal]. Let me know if that works for you.";
   },
 
   // Simulator Outcome Predictor: rates the quality of a message
