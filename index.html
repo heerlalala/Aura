@@ -14,73 +14,80 @@
   <!-- Fixed Cherry Blossom Background Branch -->
   <img src="assets/cherry_blossom_hero.png" id="sakura-bg-branch" style="position: fixed; top: -50px; left: -50px; width: 500px; max-width: 50vw; opacity: 0.38; mix-blend-mode: multiply; pointer-events: none; z-index: -1;" alt="">
 
+  <!-- Screen Reader Announcer -->
+  <div id="a11y-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
   <!-- App Wrapper Shell -->
   <div id="app-container">
 
     <!-- Mobile Top Header -->
-    <header id="mobile-header">
+    <header id="mobile-header" role="banner">
       <div class="sidebar-header" style="padding:0">
-        <div class="logo-icon">A</div>
+        <div class="logo-icon" aria-hidden="true">A</div>
         <span class="logo-text gradient-text">Aura</span>
       </div>
-      <button class="btn btn-secondary btn-icon" id="mobile-menu-trigger" aria-label="Menu">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>
+      <button class="btn btn-secondary btn-icon" id="mobile-menu-trigger" aria-label="Open main navigation menu" aria-expanded="false" aria-controls="sidebar">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>
       </button>
     </header>
 
+    <!-- Mobile Backdrop Overlay -->
+    <div id="sidebar-overlay" class="sidebar-overlay" aria-hidden="true"></div>
+
     <!-- Sidebar Navigation -->
-    <aside id="sidebar" class="hidden">
+    <aside id="sidebar" class="hidden" role="navigation" aria-label="Main Navigation">
       <div class="sidebar-header">
-        <div class="logo-icon">A</div>
+        <div class="logo-icon" aria-hidden="true">A</div>
         <span class="logo-text gradient-text">Aura</span>
+        <button id="mobile-menu-close" class="btn btn-secondary btn-icon mobile-only-close" aria-label="Close navigation menu">✕</button>
       </div>
 
-      <nav class="sidebar-menu">
+      <nav class="sidebar-menu" aria-label="App Views">
         <div class="sidebar-menu-category">Main</div>
         
-        <div class="menu-item active" data-view="dashboard" id="nav-dashboard">
-          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"></rect><rect x="14" y="3" width="7" height="5" rx="1"></rect><rect x="14" y="12" width="7" height="9" rx="1"></rect><rect x="3" y="16" width="7" height="5" rx="1"></rect></svg>
+        <div class="menu-item active" data-view="dashboard" id="nav-dashboard" tabindex="0" role="button" aria-label="Dashboard">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"></rect><rect x="14" y="3" width="7" height="5" rx="1"></rect><rect x="14" y="12" width="7" height="9" rx="1"></rect><rect x="3" y="16" width="7" height="5" rx="1"></rect></svg>
           Dashboard
         </div>
         
-        <div class="menu-item" data-view="upload" id="nav-upload">
-          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+        <div class="menu-item" data-view="upload" id="nav-upload" tabindex="0" role="button" aria-label="Chat Upload Center">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
           Chat Upload Center
         </div>
 
-        <div class="menu-item" data-view="analysis" id="nav-analysis">
-          <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+        <div class="menu-item" data-view="analysis" id="nav-analysis" tabindex="0" role="button" aria-label="Analyzer Reports">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
           Analyzer Reports
         </div>
 
         <div class="sidebar-menu-category">Coaching Modules</div>
 
-        <div class="menu-item" data-view="reality-check" id="nav-reality-check">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+        <div class="menu-item" data-view="reality-check" id="nav-reality-check" tabindex="0" role="button" aria-label="Reality Check Engine">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
           Reality Check Engine
         </div>
 
-        <div class="menu-item" data-view="simulator" id="nav-simulator">
-          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        <div class="menu-item" data-view="simulator" id="nav-simulator" tabindex="0" role="button" aria-label="Conversation Simulator">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
           Conversation Sim
         </div>
 
-        <div class="menu-item" data-view="growth" id="nav-growth">
-          <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+        <div class="menu-item" data-view="growth" id="nav-growth" tabindex="0" role="button" aria-label="Personal Growth Hub">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
           Personal Growth Hub
         </div>
 
         <div class="sidebar-menu-category">Preferences</div>
         
-        <div class="menu-item" data-view="settings" id="nav-settings">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        <div class="menu-item" data-view="settings" id="nav-settings" tabindex="0" role="button" aria-label="Settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
           Settings
         </div>
       </nav>
 
       <div class="sidebar-footer">
-        <div class="user-profile-preview" id="profile-trigger">
-          <div class="user-avatar" id="avatar-letters">US</div>
+        <div class="user-profile-preview" id="profile-trigger" tabindex="0" role="button" aria-label="User profile details">
+          <div class="user-avatar" id="avatar-letters" aria-hidden="true">US</div>
           <div class="user-info-text">
             <span class="user-name" id="profile-display-name">User</span>
             <span class="user-status" id="profile-display-status">Growth Mode</span>
@@ -89,8 +96,37 @@
       </div>
     </aside>
 
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav id="mobile-bottom-nav" role="navigation" aria-label="Mobile Quick Navigation">
+      <button class="mobile-nav-item active" data-view="dashboard" id="mobnav-dashboard" aria-label="Dashboard">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"></rect><rect x="14" y="3" width="7" height="5" rx="1"></rect><rect x="14" y="12" width="7" height="9" rx="1"></rect><rect x="3" y="16" width="7" height="5" rx="1"></rect></svg>
+        <span>Dashboard</span>
+      </button>
+      <button class="mobile-nav-item" data-view="upload" id="mobnav-upload" aria-label="Upload Center">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+        <span>Upload</span>
+      </button>
+      <button class="mobile-nav-item" data-view="reality-check" id="mobnav-reality" aria-label="Reality Check">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+        <span>Reality</span>
+      </button>
+      <button class="mobile-nav-item" data-view="simulator" id="mobnav-simulator" aria-label="Simulator">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        <span>Simulator</span>
+      </button>
+      <button class="mobile-nav-item" data-view="growth" id="mobnav-growth" aria-label="Growth Hub">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+        <span>Growth</span>
+      </button>
+      <button class="mobile-nav-item" data-view="settings" id="mobnav-settings" aria-label="Settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        <span>Settings</span>
+      </button>
+    </nav>
+
     <!-- Main Content Panel -->
-    <main id="main-content">
+    <main id="main-content" role="main">
+
 
       <!-- ==================== 1. LANDING / WELCOME VIEW ==================== -->
       <section id="view-landing" class="animate-fade-in">

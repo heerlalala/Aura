@@ -794,3 +794,63 @@ input:checked + .slider:before {
     opacity: 0;
   }
 }
+
+/* Touch Targets & Mobile Responsive Component Tweaks */
+.btn {
+  min-height: 44px;
+}
+
+.menu-item, .auth-tab, .analysis-tab-btn, .wizard-option-card {
+  min-height: 44px;
+}
+
+@media (max-width: 768px) {
+  .view-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .view-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .score-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 1.25rem;
+  }
+
+  .prediction-radial-container {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .wizard-options-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .onboarding-wizard {
+    padding: 1.5rem 1rem;
+  }
+
+  .auth-container {
+    padding: 1.5rem 1rem;
+    margin: 1.5rem auto;
+  }
+
+  .simulator-layout {
+    height: 420px;
+  }
+
+  .dropzone {
+    padding: 2rem 1rem;
+  }
+
+  .mode-toggle-card {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+}
+

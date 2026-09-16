@@ -34,7 +34,9 @@ const app = {
     
     // Switch to landing or dashboard depending on onboarding status
     if (this.state.onboarded) {
-      document.getElementById('sidebar').classList.remove('hidden');
+      if (window.innerWidth > 968) {
+        document.getElementById('sidebar').classList.remove('hidden');
+      }
       this.switchView('dashboard');
     } else {
       this.switchView('landing');
@@ -74,6 +76,50 @@ const app = {
     }
   },
 
+  // Announce messages to screen reader live region
+  announceA11y: function(msg) {
+    const announcer = document.getElementById('a11y-announcer');
+    if (announcer) {
+      announcer.textContent = msg;
+    }
+  },
+
+  // Toggle slide-out mobile menu drawer
+  toggleMobileMenu: function(isOpen) {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    const trigger = document.getElementById('mobile-menu-trigger');
+    const closeBtn = document.getElementById('mobile-menu-close');
+
+    if (!sidebar || !overlay || !trigger) return;
+
+    const shouldOpen = (isOpen !== undefined) ? isOpen : !sidebar.classList.contains('mobile-open');
+
+    if (shouldOpen) {
+      sidebar.classList.remove('hidden');
+      sidebar.classList.add('mobile-open');
+      overlay.classList.add('active');
+      overlay.setAttribute('aria-hidden', 'false');
+      trigger.setAttribute('aria-expanded', 'true');
+      sidebar.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      if (closeBtn) closeBtn.focus();
+      this.announceA11y("Navigation menu opened");
+    } else {
+      sidebar.classList.remove('mobile-open');
+      overlay.classList.remove('active');
+      overlay.setAttribute('aria-hidden', 'true');
+      trigger.setAttribute('aria-expanded', 'false');
+      if (window.innerWidth <= 968) {
+        sidebar.classList.add('hidden');
+        sidebar.setAttribute('aria-hidden', 'true');
+      }
+      document.body.style.overflow = '';
+      trigger.focus();
+      this.announceA11y("Navigation menu closed");
+    }
+  },
+
   // Page view switching router
   switchView: function(viewId) {
     // If not onboarded and trying to view interior panels, force onboarding
@@ -103,8 +149,10 @@ const app = {
     navItems.forEach(item => {
       if (item.getAttribute('data-view') === viewId) {
         item.classList.add('active');
+        item.setAttribute('aria-current', 'page');
       } else {
         item.classList.remove('active');
+        item.removeAttribute('aria-current');
       }
     });
 
@@ -113,14 +161,17 @@ const app = {
     mobileNavItems.forEach(item => {
       if (item.getAttribute('data-view') === viewId) {
         item.classList.add('active');
+        item.setAttribute('aria-current', 'page');
       } else {
         item.classList.remove('active');
+        item.removeAttribute('aria-current');
       }
     });
 
     // Run custom rendering functions per view
     this.renderCurrentView();
     this.logAudit(`Switched view to: ${viewId}`);
+    this.announceA11y(`Navigated to ${viewId.replace('-', ' ')} page`);
   },
 
   // Trigger UI updates based on current view loaded
@@ -150,31 +201,94 @@ const app = {
   setupViewRouter: function() {
     const self = this;
     
-    // Sidebar clicks
+    // Sidebar clicks & keyboard
     document.querySelectorAll('.menu-item').forEach(item => {
-      item.addEventListener('click', function() {
+      const handleAction = function() {
         const view = this.getAttribute('data-view');
         self.switchView(view);
-      });
-    });
-
-    // Mobile menu toggle
-    const menuBtn = document.getElementById('mobile-menu-trigger');
-    const sidebar = document.getElementById('sidebar');
-    if (menuBtn && sidebar) {
-      menuBtn.addEventListener('click', () => {
-        sidebar.classList.toggle('hidden');
-      });
-    }
-
-    // Close mobile menu on sidebar click
-    document.querySelectorAll('.menu-item').forEach(item => {
-      item.addEventListener('click', () => {
         if (window.innerWidth <= 968) {
-          sidebar.classList.add('hidden');
+          self.toggleMobileMenu(false);
+        }
+      };
+
+      item.addEventListener('click', handleAction);
+      item.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleAction.call(this);
         }
       });
     });
+
+    // Mobile bottom navigation clicks & keyboard
+    document.querySelectorAll('.mobile-nav-item').forEach(item => {
+      const handleAction = function() {
+        const view = this.getAttribute('data-view');
+        self.switchView(view);
+      };
+
+      item.addEventListener('click', handleAction);
+      item.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleAction.call(this);
+        }
+      });
+    });
+
+    // Mobile menu trigger button
+    const menuBtn = document.getElementById('mobile-menu-trigger');
+    if (menuBtn) {
+      menuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        self.toggleMobileMenu();
+      });
+    }
+
+    // Mobile menu close button
+    const closeBtn = document.getElementById('mobile-menu-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        self.toggleMobileMenu(false);
+      });
+    }
+
+    // Mobile overlay backdrop click
+    const overlay = document.getElementById('sidebar-overlay');
+    if (overlay) {
+      overlay.addEventListener('click', () => {
+        self.toggleMobileMenu(false);
+      });
+    }
+
+    // Global keyboard shortcuts (Escape key closes drawer)
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar && sidebar.classList.contains('mobile-open')) {
+          self.toggleMobileMenu(false);
+        }
+      }
+    });
+
+    // Enable keyboard accessibility for wizard option cards, tabs, and course cards
+    const enableKeyboardClick = (selector) => {
+      document.querySelectorAll(selector).forEach(el => {
+        if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
+        el.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            this.click();
+          }
+        });
+      });
+    };
+
+    enableKeyboardClick('.wizard-option-card');
+    enableKeyboardClick('.course-card');
+    enableKeyboardClick('.auth-tab');
+    enableKeyboardClick('.analysis-tab-btn');
   },
 
   // Setup onboarding step navigation
@@ -248,7 +362,9 @@ const app = {
         self.state.onboarded = true;
         self.saveState();
 
-        document.getElementById('sidebar').classList.remove('hidden');
+        if (window.innerWidth > 968) {
+          document.getElementById('sidebar').classList.remove('hidden');
+        }
         self.logAudit("Onboarding completed successfully. Profile created.");
         
         // Show success alert
@@ -288,7 +404,9 @@ const app = {
         if (!mfaSec.classList.contains('hidden')) {
           self.state.onboarded = true;
           self.saveState();
-          document.getElementById('sidebar').classList.remove('hidden');
+          if (window.innerWidth > 968) {
+            document.getElementById('sidebar').classList.remove('hidden');
+          }
           self.switchView('dashboard');
         } else {
           // Trigger MFA verification step simulation

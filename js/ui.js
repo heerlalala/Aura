@@ -256,7 +256,7 @@ const auraUI = {
         div.innerHTML = `
           <div class="journal-header">
             <span style="font-size:0.75rem; color:var(--secondary); font-weight:600;">${entry.date}</span>
-            <span style="font-size:0.75rem; color:var(--text-muted); cursor:pointer;" onclick="app.deleteJournal('${entry.id}')">✕ Delete</span>
+            <button class="btn btn-secondary" style="padding:0.25rem 0.5rem; font-size:0.75rem; border:none;" onclick="app.deleteJournal('${entry.id}')" aria-label="Delete entry from ${entry.date}">✕ Delete</button>
           </div>
           <small style="color:var(--text-muted); display:block; margin-bottom:0.25rem;">Prompt: "${entry.prompt}"</small>
           <p style="font-size:0.9rem; color:var(--text-secondary); white-space:pre-wrap;">${entry.text}</p>
