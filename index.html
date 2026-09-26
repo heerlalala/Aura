@@ -170,20 +170,20 @@
       <!-- ==================== 2. AUTHENTICATION VIEW ==================== -->
       <section id="view-auth" class="hidden animate-fade-in">
         <div class="auth-container glass-panel">
-          <div class="auth-tabs">
-            <div class="auth-tab active" id="tab-login">Log In</div>
-            <div class="auth-tab" id="tab-register">Sign Up</div>
+          <div class="auth-tabs" role="tablist" aria-label="Account access">
+            <div class="auth-tab active" id="tab-login" role="tab" aria-selected="true" tabindex="0" aria-controls="auth-form">Log In</div>
+            <div class="auth-tab" id="tab-register" role="tab" aria-selected="false" tabindex="-1" aria-controls="auth-form">Sign Up</div>
           </div>
 
           <!-- Basic login/signup form -->
           <form id="auth-form" onsubmit="event.preventDefault();">
             <div class="form-group">
               <label for="auth-email">Your Email</label>
-              <input type="email" id="auth-email" class="form-input" placeholder="name@domain.com" required value="demo@aura.ai">
+              <input type="email" id="auth-email" class="form-input" placeholder="name@domain.com" required>
             </div>
             <div class="form-group">
               <label for="auth-password">Password</label>
-              <input type="password" id="auth-password" class="form-input" placeholder="••••••••" required value="password123">
+              <input type="password" id="auth-password" class="form-input" placeholder="••••••••" required>
             </div>
             
             <!-- Extra parameters for Multi-Factor Authentication Simulation -->
@@ -199,6 +199,7 @@
             </div>
 
             <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;" id="btn-auth-submit">Let's Go</button>
+            <button type="button" class="btn btn-secondary" style="width: 100%; margin-top: 0.75rem;" id="btn-auth-back">Back to Welcome</button>
           </form>
         </div>
       </section>
