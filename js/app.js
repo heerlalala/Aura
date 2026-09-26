@@ -403,7 +403,7 @@ const app = {
         // If MFA section is already visible, complete login
         if (!mfaSec.classList.contains('hidden')) {
           const mfaCode = document.getElementById('auth-mfa').value.trim();
-          if (!/^d{6}$/.test(mfaCode)) {
+          if (!/^[0-9]{6}$/.test(mfaCode)) {
             alert("Please enter a valid 6-digit MFA code.");
             return;
           }
