@@ -393,6 +393,33 @@ const app = {
       self.switchView('auth');
     });
 
+    const loginTab = document.getElementById('tab-login');
+    const registerTab = document.getElementById('tab-register');
+    const authSubmit = document.getElementById('btn-auth-submit');
+    const mfaSection = document.getElementById('mfa-section');
+    const mfaInput = document.getElementById('auth-mfa');
+    let isRegistering = false;
+
+    const setAuthMode = (registering) => {
+      isRegistering = registering;
+      loginTab.classList.toggle('active', !registering);
+      registerTab.classList.toggle('active', registering);
+      loginTab.setAttribute('aria-selected', String(!registering));
+      registerTab.setAttribute('aria-selected', String(registering));
+      loginTab.setAttribute('tabindex', registering ? '-1' : '0');
+      registerTab.setAttribute('tabindex', registering ? '0' : '-1');
+      mfaSection.classList.add('hidden');
+      mfaInput.value = '';
+      authSubmit.textContent = registering ? 'Create Account' : "Let's Go";
+    };
+
+    loginTab.addEventListener('click', () => setAuthMode(false));
+    registerTab.addEventListener('click', () => setAuthMode(true));
+    document.getElementById('btn-auth-back').addEventListener('click', () => {
+      setAuthMode(false);
+      self.switchView('landing');
+    });
+
     // Auth screen submits
     document.getElementById('btn-auth-submit').addEventListener('click', () => {
       const email = document.getElementById('auth-email').value;
@@ -417,7 +444,7 @@ const app = {
         } else {
           // Trigger MFA verification step simulation
           mfaSec.classList.remove('hidden');
-          document.getElementById('btn-auth-submit').textContent = "Verify & Access";
+          authSubmit.textContent = isRegistering ? "Verify & Create Account" : "Verify & Access";
           self.logAudit("MFA code generated. Awaiting device verification input.");
         }
       }
