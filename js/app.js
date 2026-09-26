@@ -402,6 +402,12 @@ const app = {
       if (email && pass) {
         // If MFA section is already visible, complete login
         if (!mfaSec.classList.contains('hidden')) {
+          const mfaCode = document.getElementById('auth-mfa').value.trim();
+          if (!/^d{6}$/.test(mfaCode)) {
+            alert("Please enter a valid 6-digit MFA code.");
+            return;
+          }
+
           self.state.onboarded = true;
           self.saveState();
           if (window.innerWidth > 968) {
