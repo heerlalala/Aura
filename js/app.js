@@ -1,8 +1,6 @@
 // Aura Application Master Controller
 
-const app = {
-  // Application State
-  state: {
+const createDefaultState = () => ({
     username: "Alex",
     relationshipStatus: "dating",
     onboarded: false,
@@ -17,51 +15,167 @@ const app = {
     audioPlaying: false,
     audioProgress: 0,
     audioInterval: null
-  },
+});
+
+const app = {
+  state: createDefaultState(),
+  currentUser: null,
+  authBusy: false,
+  phoneConfirmation: null,
+  recaptchaVerifier: null,
 
   // Initialize App
   init: function() {
-    this.loadState();
     this.setupViewRouter();
     this.setupEventListeners();
     this.setupOnboardingWizard();
     this.setupSimulator();
-    
-    // Set active analysis default if not loaded
-    if (!this.state.activeAnalysis) {
-      this.state.activeAnalysis = auraEngines.getDefaultAnalysis();
-    }
-    
-    // Switch to landing or dashboard depending on onboarding status
-    if (this.state.onboarded) {
-      if (window.innerWidth > 968) {
-        document.getElementById('sidebar').classList.remove('hidden');
-      }
-      this.switchView('dashboard');
-    } else {
-      this.switchView('landing');
-    }
-    
+
+    // Never restore a view from local storage before Firebase has confirmed the user.
+    this.switchView('landing');
     this.startSakuraFalling();
     this.startWindBlowing();
     this.logAudit("Aura Engine initialized successfully.");
+
+    const firebase = window.auraFirebase;
+    if (!firebase || !firebase.configured) {
+      this.logAudit("Firebase Authentication is not configured yet.");
+      return;
+    }
+
+    firebase.onAuthStateChanged(firebase.auth, (user) => {
+      this.handleAuthStateChanged(user);
+    }, (error) => {
+      this.currentUser = null;
+      this.switchView('landing');
+      this.showAuthMessage(this.getFriendlyAuthError(error), true);
+    });
   },
 
-  // Sync state to local storage
+  // Local data is private to the signed-in Firebase user on this browser.
+  storageKey: function(uid) {
+    const userId = uid || (this.currentUser && this.currentUser.uid);
+    return userId ? `aura_state_vault:${userId}` : null;
+  },
+
   saveState: function() {
-    localStorage.setItem('aura_state_vault', JSON.stringify(this.state));
+    const key = this.storageKey();
+    if (!key) return;
+    localStorage.setItem(key, JSON.stringify(this.state));
   },
 
-  // Load state from local storage
-  loadState: function() {
-    const raw = localStorage.getItem('aura_state_vault');
+  loadState: function(uid) {
+    this.state = createDefaultState();
+    const key = this.storageKey(uid);
+    const raw = key && localStorage.getItem(key);
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
         this.state = { ...this.state, ...parsed };
       } catch (e) {
-        console.error("Failed to parse Local Data Vault. Resetting...", e);
+        console.error("Failed to parse this user's Local Data Vault. Resetting...", e);
       }
+    }
+    if (!this.state.activeAnalysis) {
+      this.state.activeAnalysis = auraEngines.getDefaultAnalysis();
+    }
+  },
+
+  handleAuthStateChanged: function(user) {
+    this.currentUser = user || null;
+    if (!user) {
+      this.state = createDefaultState();
+      document.getElementById('sidebar').classList.add('hidden');
+      this.switchView('landing');
+      return;
+    }
+
+    this.loadState(user.uid);
+    if (!this.state.username || this.state.username === 'Alex') {
+      this.state.username = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
+    }
+    if (window.innerWidth > 968) {
+      document.getElementById('sidebar').classList.remove('hidden');
+    }
+    this.switchView(this.state.onboarded ? 'dashboard' : 'onboarding');
+    this.logAudit(`Firebase user authenticated: ${user.uid}`);
+  },
+
+  showAuthMessage: function(message, isError) {
+    const status = document.getElementById('auth-message');
+    if (!status) return;
+    status.textContent = message || '';
+    status.setAttribute('role', isError ? 'alert' : 'status');
+    status.style.color = isError ? 'var(--danger)' : 'var(--text-secondary)';
+  },
+
+  getFriendlyAuthError: function(error) {
+    const messages = {
+      'auth/invalid-email': 'Enter a valid email address.',
+      'auth/missing-password': 'Enter your password to continue.',
+      'auth/weak-password': 'Choose a password with at least 6 characters.',
+      'auth/email-already-in-use': 'An account already uses that email. Try logging in instead.',
+      'auth/invalid-credential': 'That email and password combination did not work.',
+      'auth/user-not-found': 'No account was found for that email. Try signing up.',
+      'auth/wrong-password': 'That email and password combination did not work.',
+      'auth/popup-closed-by-user': 'The Google sign in window was closed before finishing.',
+      'auth/popup-blocked': 'Your browser blocked the Google sign in window. Allow popups and try again.',
+      'auth/unauthorized-domain': 'This website is not authorized in Firebase yet. Add its domain in Authentication settings.',
+      'auth/operation-not-allowed': 'This sign in method is not enabled in Firebase Authentication yet.',
+      'auth/network-request-failed': 'Could not reach Firebase. Check your internet connection and try again.',
+      'auth/too-many-requests': 'There have been too many attempts. Wait a little and try again.',
+      'auth/invalid-phone-number': 'Enter a valid phone number with its country code, such as +1 555 123 4567.',
+      'auth/missing-phone-number': 'Enter your phone number with its country code first.',
+      'auth/quota-exceeded': 'SMS verification is temporarily unavailable. Try again later.',
+      'auth/captcha-check-failed': 'Phone verification could not be completed. Try again.',
+      'auth/invalid-verification-code': 'That SMS code is not correct. Check it and try again.',
+      'auth/code-expired': 'That SMS code has expired. Request a new code.',
+      'auth/session-expired': 'Phone verification expired. Request a new code.'
+    };
+    const code = error && error.code;
+    if (code && messages[code]) return messages[code];
+    if (error && error.message === 'firebase-config-missing') {
+      return 'Firebase is not connected yet. Add the Web app settings in js/firebase-config.js.';
+    }
+    return 'We could not complete sign in. Please try again.';
+  },
+
+  runAuthAction: async function(button, busyLabel, action) {
+    if (this.authBusy) return;
+    const firebase = window.auraFirebase;
+    if (!firebase || !firebase.configured) {
+      this.showAuthMessage(this.getFriendlyAuthError({ message: 'firebase-config-missing' }), true);
+      return;
+    }
+
+    this.authBusy = true;
+    const buttons = ['btn-auth-submit', 'btn-google-signin', 'btn-phone-send', 'btn-phone-verify', 'btn-signout'];
+    const originals = new Map();
+    buttons.forEach((id) => {
+      const control = document.getElementById(id);
+      if (control) {
+        originals.set(control, control.textContent);
+        control.disabled = true;
+      }
+    });
+    if (button) button.textContent = busyLabel;
+    this.showAuthMessage('', false);
+
+    try {
+      await action(firebase);
+    } catch (error) {
+      this.showAuthMessage(this.getFriendlyAuthError(error), true);
+      this.logAudit(`Authentication failed: ${error && error.code ? error.code : 'unknown error'}`);
+      if (this.recaptchaVerifier) {
+        this.recaptchaVerifier.clear();
+        this.recaptchaVerifier = null;
+      }
+    } finally {
+      originals.forEach((label, control) => {
+        control.disabled = false;
+        control.textContent = label;
+      });
+      this.authBusy = false;
     }
   },
 
@@ -122,10 +236,13 @@ const app = {
 
   // Page view switching router
   switchView: function(viewId) {
-    // If not onboarded and trying to view interior panels, force onboarding
-    if (!this.state.onboarded && viewId !== 'landing' && viewId !== 'auth' && viewId !== 'onboarding') {
-      this.switchView('onboarding');
-      return;
+    const publicViews = ['landing', 'auth'];
+    if (!this.currentUser && !publicViews.includes(viewId)) {
+      viewId = 'auth';
+    } else if (this.currentUser && viewId === 'auth') {
+      viewId = this.state.onboarded ? 'dashboard' : 'onboarding';
+    } else if (this.currentUser && !this.state.onboarded && !['landing', 'onboarding'].includes(viewId)) {
+      viewId = 'onboarding';
     }
 
     this.state.currentView = viewId;
@@ -352,6 +469,10 @@ const app = {
         currentStep++;
         updateWizard();
       } else {
+        if (!self.currentUser) {
+          self.switchView('auth');
+          return;
+        }
         // Collect form data and complete onboarding
         const nameVal = document.getElementById('onboard-name').value.trim() || "Alex";
         self.state.username = nameVal;
@@ -384,34 +505,24 @@ const app = {
   setupEventListeners: function() {
     const self = this;
 
-    // Welcome start
+    // Welcome start takes new visitors through account creation before onboarding.
     document.getElementById('btn-landing-start').addEventListener('click', () => {
-      self.switchView('onboarding');
+      setAuthMode(true);
+      self.switchView('auth');
     });
 
     document.getElementById('btn-landing-auth').addEventListener('click', () => {
+      setAuthMode(false);
       self.switchView('auth');
     });
 
     const loginTab = document.getElementById('tab-login');
     const registerTab = document.getElementById('tab-register');
     const authSubmit = document.getElementById('btn-auth-submit');
-    const mfaSection = document.getElementById('mfa-section');
-    const mfaInput = document.getElementById('auth-mfa');
-    const mfaHint = document.getElementById('mfa-help');
-    const resendMfaButton = document.getElementById('btn-resend-mfa');
-    let demoMfaCode = '';
     let isRegistering = false;
+    const phoneCodeSection = document.getElementById('phone-code-section');
 
-    const issueDemoMfaCode = () => {
-      demoMfaCode = String(Math.floor(Math.random() * 900000) + 100000);
-      mfaInput.value = '';
-      mfaHint.textContent = 'Demo code: ' + demoMfaCode + '. No email was sent.';
-    };
-
-    resendMfaButton.addEventListener('click', issueDemoMfaCode);
-
-    const setAuthMode = (registering) => {
+    function setAuthMode(registering) {
       isRegistering = registering;
       loginTab.classList.toggle('active', !registering);
       registerTab.classList.toggle('active', registering);
@@ -419,49 +530,77 @@ const app = {
       registerTab.setAttribute('aria-selected', String(registering));
       loginTab.setAttribute('tabindex', registering ? '-1' : '0');
       registerTab.setAttribute('tabindex', registering ? '0' : '-1');
-      mfaSection.classList.add('hidden');
-      mfaInput.value = '';
-      demoMfaCode = '';
-      mfaHint.textContent = 'A demo code will appear here. No email will be sent.';
       authSubmit.textContent = registering ? 'Create Account' : "Let's Go";
-    };
+      document.getElementById('auth-password').setAttribute('autocomplete', registering ? 'new-password' : 'current-password');
+      self.showAuthMessage('', false);
+    }
 
     loginTab.addEventListener('click', () => setAuthMode(false));
     registerTab.addEventListener('click', () => setAuthMode(true));
     document.getElementById('btn-auth-back').addEventListener('click', () => {
       setAuthMode(false);
+      phoneCodeSection.classList.add('hidden');
+      self.phoneConfirmation = null;
       self.switchView('landing');
     });
 
-    // Auth screen submits
-    document.getElementById('btn-auth-submit').addEventListener('click', () => {
-      const email = document.getElementById('auth-email').value;
-      const pass = document.getElementById('auth-password').value;
-      const mfaSec = document.getElementById('mfa-section');
+    document.getElementById('auth-form').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      if (!form.reportValidity()) return;
+      const email = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-password').value;
+      self.runAuthAction(authSubmit, isRegistering ? 'Creating account…' : 'Signing in…', (firebase) => {
+        const method = isRegistering ? firebase.createUserWithEmailAndPassword : firebase.signInWithEmailAndPassword;
+        return method(firebase.auth, email, password);
+      });
+    });
 
-      if (email && pass) {
-        // If MFA section is already visible, complete login
-        if (!mfaSec.classList.contains('hidden')) {
-          const mfaCode = document.getElementById('auth-mfa').value.trim();
-          if (!/^[0-9]{6}$/.test(mfaCode) || mfaCode !== demoMfaCode) {
-            alert("That code does not match the latest demo code.");
-            return;
-          }
+    document.getElementById('btn-google-signin').addEventListener('click', () => {
+      const button = document.getElementById('btn-google-signin');
+      self.runAuthAction(button, 'Opening Google…', (firebase) => {
+        return firebase.signInWithPopup(firebase.auth, new firebase.GoogleAuthProvider());
+      });
+    });
 
-          self.state.onboarded = true;
-          self.saveState();
-          if (window.innerWidth > 968) {
-            document.getElementById('sidebar').classList.remove('hidden');
-          }
-          self.switchView('dashboard');
-        } else {
-          // Show a local demo code because this site has no email service
-          issueDemoMfaCode();
-          mfaSec.classList.remove('hidden');
-          authSubmit.textContent = isRegistering ? "Verify & Create Account" : "Verify & Access";
-          self.logAudit("Displayed a local demo verification code.");
-        }
+    document.getElementById('btn-phone-send').addEventListener('click', () => {
+      const button = document.getElementById('btn-phone-send');
+      const phoneNumber = document.getElementById('auth-phone').value.trim();
+      if (!phoneNumber) {
+        self.showAuthMessage('Enter your phone number with its country code first.', true);
+        return;
       }
+      self.runAuthAction(button, 'Sending code…', async (firebase) => {
+        if (!self.recaptchaVerifier) {
+          self.recaptchaVerifier = new firebase.RecaptchaVerifier(firebase.auth, 'recaptcha-container', { size: 'invisible' });
+        }
+        self.phoneConfirmation = await firebase.signInWithPhoneNumber(firebase.auth, phoneNumber, self.recaptchaVerifier);
+        phoneCodeSection.classList.remove('hidden');
+        document.getElementById('auth-phone-code').focus();
+        self.showAuthMessage('A verification code was sent by SMS. Enter it below to continue.', false);
+      });
+    });
+
+    document.getElementById('btn-phone-verify').addEventListener('click', () => {
+      const code = document.getElementById('auth-phone-code').value.trim();
+      if (!self.phoneConfirmation) {
+        self.showAuthMessage('Request a new SMS verification code first.', true);
+        return;
+      }
+      if (!/^\d{6}$/.test(code)) {
+        self.showAuthMessage('Enter the six digit code from your SMS.', true);
+        return;
+      }
+      const button = document.getElementById('btn-phone-verify');
+      self.runAuthAction(button, 'Verifying…', async () => {
+        await self.phoneConfirmation.confirm(code);
+        self.phoneConfirmation = null;
+      });
+    });
+
+    document.getElementById('btn-signout').addEventListener('click', () => {
+      const button = document.getElementById('btn-signout');
+      self.runAuthAction(button, 'Signing out…', (firebase) => firebase.signOut(firebase.auth));
     });
 
     // Sample conversation triggers
@@ -600,26 +739,11 @@ const app = {
 
     document.getElementById('btn-clear-settings-data').addEventListener('click', () => {
       if (confirm("Are you sure you want to delete all local files and metrics? This cannot be undone.")) {
-        localStorage.removeItem('aura_state_vault');
-        self.state = {
-          username: "Alex",
-          relationshipStatus: "dating",
-          onboarded: false,
-          completedLessons: [],
-          journalEntries: [],
-          simMessages: [],
-          activeAnalysis: null,
-          straightAnswerMode: true,
-          currentView: "landing",
-          currentCourse: null,
-          currentLessonIndex: 0,
-          audioPlaying: false,
-          audioProgress: 0,
-          audioInterval: null
-        };
-        document.getElementById('sidebar').classList.add('hidden');
-        self.switchView('landing');
-        alert("All local cookies and cache parameters cleared.");
+        const key = self.storageKey();
+        if (key) localStorage.removeItem(key);
+        self.state = createDefaultState();
+        self.switchView(self.currentUser ? 'onboarding' : 'landing');
+        alert("Your local Aura data for this account has been cleared.");
       }
     });
   },
