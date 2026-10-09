@@ -46,6 +46,7 @@ const app = {
     const firebase = window.auraFirebase;
     if (!firebase || !firebase.configured) {
       this.logAudit("Firebase Authentication is not configured yet.");
+      this.showAuthMessage(this.getFirebaseUnavailableMessage(firebase), true);
       return;
     }
 
@@ -140,17 +141,36 @@ const app = {
     };
     const code = error && error.code;
     if (code && messages[code]) return messages[code];
+    if (code === 'auth/api-key-not-valid' || code === 'auth/invalid-api-key') {
+      return 'Firebase rejected this app’s API key. Check the Web app config and API key settings for project aura-dd66e.';
+    }
+    if (code === 'auth/app-not-authorized') {
+      return 'This website is not authorized to use Firebase Authentication. Check the API key website restrictions and Firebase authorized domains.';
+    }
     if (error && error.message === 'firebase-config-missing') {
       return 'Firebase is not connected yet. Add the Web app settings in js/firebase-config.js.';
     }
     return 'We could not complete sign in. Please try again.';
   },
 
+  getFirebaseUnavailableMessage: function(firebase) {
+    if (!firebase) {
+      return 'Firebase Authentication could not load. Check your connection and reload the page.';
+    }
+    if (firebase.initializationError) {
+      const code = firebase.initializationError.code;
+      return code
+        ? `Firebase Authentication could not initialize (${code}). Check the Web app config and browser console.`
+        : 'Firebase Authentication could not initialize. Check the Web app config and browser console.';
+    }
+    return this.getFriendlyAuthError({ message: 'firebase-config-missing' });
+  },
+
   runAuthAction: async function(button, busyLabel, action) {
     if (this.authBusy) return;
     const firebase = window.auraFirebase;
     if (!firebase || !firebase.configured) {
-      this.showAuthMessage(this.getFriendlyAuthError({ message: 'firebase-config-missing' }), true);
+      this.showAuthMessage(this.getFirebaseUnavailableMessage(firebase), true);
       return;
     }
 
