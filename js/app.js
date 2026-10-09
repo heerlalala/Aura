@@ -150,6 +150,12 @@ const app = {
     if (error && error.message === 'firebase-config-missing') {
       return 'Firebase is not connected yet. Add the Web app settings in js/firebase-config.js.';
     }
+    if (code) {
+      return `We could not complete sign in (${code}). Check Firebase Authentication settings and the browser console.`;
+    }
+    if (error && error.name) {
+      return `We could not complete sign in (${error.name}). Check the browser console for the underlying error.`;
+    }
     return 'We could not complete sign in. Please try again.';
   },
 
@@ -191,6 +197,10 @@ const app = {
       await action(firebase);
     } catch (error) {
       this.showAuthMessage(this.getFriendlyAuthError(error), true);
+      console.error('Aura Firebase Auth request failed', {
+        code: error && typeof error.code === 'string' ? error.code : null,
+        name: error && typeof error.name === 'string' ? error.name : null
+      });
       this.logAudit(`Authentication failed: ${error && error.code ? error.code : 'unknown error'}`);
       if (this.recaptchaVerifier) {
         this.recaptchaVerifier.clear();
