@@ -3,6 +3,12 @@
 const createDefaultState = () => ({
     username: "Alex",
     relationshipStatus: "dating",
+    onboardingPreferences: {
+      goal: "conflict",
+      communicationStyle: "words",
+      emotionalFocus: "anxiety",
+      privacyMode: "local"
+    },
     onboarded: false,
     completedLessons: [],
     journalEntries: [],
@@ -185,7 +191,7 @@ const app = {
     if (logs) {
       const now = new Date();
       const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      logs.innerHTML += `[${timeStr}] ${msg}<br>`;
+      logs.append(document.createTextNode(`[${timeStr}] ${msg}`), document.createElement('br'));
       logs.scrollTop = logs.scrollHeight;
     }
   },
@@ -479,6 +485,17 @@ const app = {
         
         const selectedStatusCard = document.querySelector('#step-3 .wizard-option-card.selected');
         self.state.relationshipStatus = selectedStatusCard ? selectedStatusCard.getAttribute('data-value') : 'dating';
+
+        const selectedValue = (stepId, fallback) => {
+          const selected = document.querySelector(`#${stepId} .wizard-option-card.selected`);
+          return selected ? selected.getAttribute('data-value') : fallback;
+        };
+        self.state.onboardingPreferences = {
+          goal: selectedValue('step-1', 'conflict'),
+          communicationStyle: selectedValue('step-2', 'words'),
+          emotionalFocus: selectedValue('step-4', 'anxiety'),
+          privacyMode: selectedValue('step-5', 'local')
+        };
         
         self.state.onboarded = true;
         self.saveState();
@@ -1048,3 +1065,4 @@ const app = {
 window.addEventListener('DOMContentLoaded', () => {
   app.init();
 });
+

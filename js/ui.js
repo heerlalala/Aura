@@ -1,6 +1,17 @@
 // Aura UI Renderer Module
 
 const auraUI = {
+
+  // Escape values before placing user-controlled content in an HTML template.
+  escapeHTML: function(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (character) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[character]);
+  },
   
   // Update circular gauge score indicator
   updateScoreDial: function(elementId, value) {
@@ -170,9 +181,9 @@ const auraUI = {
         const div = document.createElement('div');
         div.className = "flag-box red animate-fade-in";
         div.innerHTML = `
-          <div class="flag-title">🚩 ${flag.speaker} used '${flag.flag}'</div>
-          <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem;">Context: "${flag.text}"</p>
-          <small style="color:var(--text-muted); display:block; margin-top:0.25rem;">Reason: ${flag.reason}</small>
+          <div class="flag-title">🚩 ${this.escapeHTML(flag.speaker)} used '${this.escapeHTML(flag.flag)}'</div>
+          <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem;">Context: "${this.escapeHTML(flag.text)}"</p>
+          <small style="color:var(--text-muted); display:block; margin-top:0.25rem;">Reason: ${this.escapeHTML(flag.reason)}</small>
         `;
         redBox.appendChild(div);
       });
@@ -188,9 +199,9 @@ const auraUI = {
         const div = document.createElement('div');
         div.className = "flag-box green animate-fade-in";
         div.innerHTML = `
-          <div class="flag-title">🟢 ${flag.speaker} used '${flag.flag}'</div>
-          <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem;">Context: "${flag.text}"</p>
-          <small style="color:var(--text-muted); display:block; margin-top:0.25rem;">Reason: ${flag.reason}</small>
+          <div class="flag-title">🟢 ${this.escapeHTML(flag.speaker)} used '${this.escapeHTML(flag.flag)}'</div>
+          <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem;">Context: "${this.escapeHTML(flag.text)}"</p>
+          <small style="color:var(--text-muted); display:block; margin-top:0.25rem;">Reason: ${this.escapeHTML(flag.reason)}</small>
         `;
         greenBox.appendChild(div);
       });
@@ -200,7 +211,7 @@ const auraUI = {
   // Render Reality Check console
   renderRealityCheck: function(analysis, straightMode) {
     const consoleText = document.getElementById('reality-talk-content');
-    consoleText.innerHTML = auraEngines.generateRealityCheck(analysis, straightMode);
+    consoleText.textContent = auraEngines.generateRealityCheck(analysis, straightMode);
     
     // Responsibility slider configuration
     const slider = document.getElementById('reality-responsibility-slider');
@@ -253,16 +264,33 @@ const auraUI = {
       state.journalEntries.forEach(entry => {
         const div = document.createElement('div');
         div.className = "glass-panel journal-entry-card animate-fade-in";
-        div.innerHTML = `
-          <div class="journal-header">
-            <span style="font-size:0.75rem; color:var(--secondary); font-weight:600;">${entry.date}</span>
-            <button class="btn btn-secondary" style="padding:0.25rem 0.5rem; font-size:0.75rem; border:none;" onclick="app.deleteJournal('${entry.id}')" aria-label="Delete entry from ${entry.date}">✕ Delete</button>
-          </div>
-          <small style="color:var(--text-muted); display:block; margin-bottom:0.25rem;">Prompt: "${entry.prompt}"</small>
-          <p style="font-size:0.9rem; color:var(--text-secondary); white-space:pre-wrap;">${entry.text}</p>
-        `;
+        const header = document.createElement('div');
+        header.className = "journal-header";
+
+        const date = document.createElement('span');
+        date.style.cssText = "font-size:0.75rem; color:var(--secondary); font-weight:600;";
+        date.textContent = entry.date;
+
+        const deleteButton = document.createElement('button');
+        deleteButton.className = "btn btn-secondary";
+        deleteButton.style.cssText = "padding:0.25rem 0.5rem; font-size:0.75rem; border:none;";
+        deleteButton.setAttribute('aria-label', `Delete entry from ${entry.date}`);
+        deleteButton.textContent = "✕ Delete";
+        deleteButton.addEventListener('click', () => app.deleteJournal(entry.id));
+        header.append(date, deleteButton);
+
+        const prompt = document.createElement('small');
+        prompt.style.cssText = "color:var(--text-muted); display:block; margin-bottom:0.25rem;";
+        prompt.textContent = `Prompt: "${entry.prompt}"`;
+
+        const text = document.createElement('p');
+        text.style.cssText = "font-size:0.9rem; color:var(--text-secondary); white-space:pre-wrap;";
+        text.textContent = entry.text;
+
+        div.append(header, prompt, text);
         diaryBox.appendChild(div);
       });
     }
   }
 };
+
