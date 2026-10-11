@@ -27,8 +27,6 @@ const app = {
   state: createDefaultState(),
   currentUser: null,
   authBusy: false,
-  phoneConfirmation: null,
-  recaptchaVerifier: null,
 
   // Initialize App
   init: function() {
@@ -131,13 +129,6 @@ const app = {
       'auth/operation-not-allowed': 'This sign in method is not enabled in Firebase Authentication yet.',
       'auth/network-request-failed': 'Could not reach Firebase. Check your internet connection and try again.',
       'auth/too-many-requests': 'There have been too many attempts. Wait a little and try again.',
-      'auth/invalid-phone-number': 'Enter a valid phone number with its country code, such as +1 555 123 4567.',
-      'auth/missing-phone-number': 'Enter your phone number with its country code first.',
-      'auth/quota-exceeded': 'SMS verification is temporarily unavailable. Try again later.',
-      'auth/captcha-check-failed': 'Phone verification could not be completed. Try again.',
-      'auth/invalid-verification-code': 'That SMS code is not correct. Check it and try again.',
-      'auth/code-expired': 'That SMS code has expired. Request a new code.',
-      'auth/session-expired': 'Phone verification expired. Request a new code.'
     };
     const code = error && error.code;
     if (code && messages[code]) return messages[code];
@@ -181,7 +172,7 @@ const app = {
     }
 
     this.authBusy = true;
-    const buttons = ['btn-auth-submit', 'btn-google-signin', 'btn-phone-send', 'btn-phone-verify', 'btn-signout'];
+    const buttons = ['btn-auth-submit', 'btn-google-signin', 'btn-signout'];
     const originals = new Map();
     buttons.forEach((id) => {
       const control = document.getElementById(id);
@@ -202,10 +193,6 @@ const app = {
         name: error && typeof error.name === 'string' ? error.name : null
       });
       this.logAudit(`Authentication failed: ${error && error.code ? error.code : 'unknown error'}`);
-      if (this.recaptchaVerifier) {
-        this.recaptchaVerifier.clear();
-        this.recaptchaVerifier = null;
-      }
     } finally {
       originals.forEach((label, control) => {
         control.disabled = false;
@@ -567,7 +554,6 @@ const app = {
     const registerTab = document.getElementById('tab-register');
     const authSubmit = document.getElementById('btn-auth-submit');
     let isRegistering = false;
-    const phoneCodeSection = document.getElementById('phone-code-section');
 
     function setAuthMode(registering) {
       isRegistering = registering;
@@ -586,8 +572,6 @@ const app = {
     registerTab.addEventListener('click', () => setAuthMode(true));
     document.getElementById('btn-auth-back').addEventListener('click', () => {
       setAuthMode(false);
-      phoneCodeSection.classList.add('hidden');
-      self.phoneConfirmation = null;
       self.switchView('landing');
     });
 
@@ -607,41 +591,6 @@ const app = {
       const button = document.getElementById('btn-google-signin');
       self.runAuthAction(button, 'Opening Google…', (firebase) => {
         return firebase.signInWithPopup(firebase.auth, new firebase.GoogleAuthProvider());
-      });
-    });
-
-    document.getElementById('btn-phone-send').addEventListener('click', () => {
-      const button = document.getElementById('btn-phone-send');
-      const phoneNumber = document.getElementById('auth-phone').value.trim();
-      if (!phoneNumber) {
-        self.showAuthMessage('Enter your phone number with its country code first.', true);
-        return;
-      }
-      self.runAuthAction(button, 'Sending code…', async (firebase) => {
-        if (!self.recaptchaVerifier) {
-          self.recaptchaVerifier = new firebase.RecaptchaVerifier(firebase.auth, 'recaptcha-container', { size: 'invisible' });
-        }
-        self.phoneConfirmation = await firebase.signInWithPhoneNumber(firebase.auth, phoneNumber, self.recaptchaVerifier);
-        phoneCodeSection.classList.remove('hidden');
-        document.getElementById('auth-phone-code').focus();
-        self.showAuthMessage('A verification code was sent by SMS. Enter it below to continue.', false);
-      });
-    });
-
-    document.getElementById('btn-phone-verify').addEventListener('click', () => {
-      const code = document.getElementById('auth-phone-code').value.trim();
-      if (!self.phoneConfirmation) {
-        self.showAuthMessage('Request a new SMS verification code first.', true);
-        return;
-      }
-      if (!/^\d{6}$/.test(code)) {
-        self.showAuthMessage('Enter the six digit code from your SMS.', true);
-        return;
-      }
-      const button = document.getElementById('btn-phone-verify');
-      self.runAuthAction(button, 'Verifying…', async () => {
-        await self.phoneConfirmation.confirm(code);
-        self.phoneConfirmation = null;
       });
     });
 

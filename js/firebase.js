@@ -4,9 +4,7 @@ import {
   getAuth,
   GoogleAuthProvider,
   onAuthStateChanged,
-  RecaptchaVerifier,
   signInWithEmailAndPassword,
-  signInWithPhoneNumber,
   signInWithPopup,
   signOut
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
@@ -32,9 +30,7 @@ window.auraFirebase = Object.freeze({
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   onAuthStateChanged,
-  RecaptchaVerifier,
   signInWithEmailAndPassword,
-  signInWithPhoneNumber,
   signInWithPopup,
   signOut
 });
