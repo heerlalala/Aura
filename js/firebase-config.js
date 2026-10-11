@@ -1,7 +1,7 @@
 // Firebase Web app configuration is public client configuration, not a secret.
 // Copy the values for the registered Aura Web app from Firebase Console > Project settings.
 export const firebaseConfig = Object.freeze({
-  apiKey: "AIzaSyDQelbnZGQyUHunfYp3wOVaiFHPhA8lUE8",
+  apiKey: "AIzaSyAIM-lwXeYBTgzA4ECEGJT9_YCi_SPcxgk",
   authDomain: "aura-dd66e.firebaseapp.com",
   projectId: "aura-dd66e",
   storageBucket: "aura-dd66e.firebasestorage.app",
