@@ -60,21 +60,48 @@ const auraUI = {
     patternBox.replaceChildren();
     const actionsBox = document.getElementById('dashboard-actions-list');
     actionsBox.replaceChildren();
-    if (!analysis) {
-      patternBox.appendChild(this.element('p', 'insight-item', 'No current analysis. Choose a transcript in the Upload Center and run the local scan.'));
-      actionsBox.appendChild(this.element('p', 'insight-item', 'Recommendations are generated only from an analyzed conversation.'));
-    } else {
+    const reflections = auraConversationService.buildOnboardingReflections(state.onboardingPreferences);
+    reflections.patterns.forEach((pattern) => {
+      const card = this.element('div', 'insight-item');
+      card.append(
+        this.element('strong', '', pattern.title),
+        this.element('small', 'insight-source', 'From your onboarding answer'),
+        this.element('p', '', pattern.observation)
+      );
+      patternBox.appendChild(card);
+    });
+    if (analysis) {
       analysis.findings.forEach((finding) => {
         const card = this.element('div', 'insight-item');
-        card.append(this.element('strong', '', finding.title), this.element('p', '', `${finding.observation} Evidence: ${finding.evidenceMessageIds.join(', ')}.`));
+        card.append(
+          this.element('strong', '', finding.title),
+          this.element('small', 'insight-source', `From transcript: ${conversation ? conversation.sourceName : 'analyzed conversation'}`),
+          this.element('p', '', `${finding.observation} Evidence: ${finding.evidenceMessageIds.join(', ')}.`)
+        );
         patternBox.appendChild(card);
       });
-      if (!analysis.findings.length) patternBox.appendChild(this.element('p', 'insight-item', 'No configured wording markers found in this transcript.'));
+      if (!analysis.findings.length) patternBox.appendChild(this.element('p', 'insight-item', 'No configured wording markers were found in the analyzed transcript.'));
+    }
+    if (!reflections.patterns.length && !analysis) {
+      patternBox.appendChild(this.element('p', 'insight-item', 'Complete the onboarding reflection questions to see patterns based on your answers.'));
+    }
+    reflections.moves.forEach((move) => {
+      const card = this.element('div', 'insight-item success');
+      card.append(this.element('strong', '', move.label), this.element('p', '', move.text));
+      actionsBox.appendChild(card);
+    });
+    if (analysis) {
       analysis.recommendations.slice(0, 3).forEach((recommendation) => {
         const card = this.element('div', 'insight-item success');
-        card.append(this.element('strong', '', 'Possible next step'), this.element('p', '', `${recommendation.text}${recommendation.basedOnFindingIds.length ? ` Evidence: ${recommendation.basedOnFindingIds.join(', ')}.` : ''}`));
+        card.append(
+          this.element('strong', '', 'Based on your transcript reading'),
+          this.element('p', '', `${recommendation.text}${recommendation.basedOnFindingIds.length ? ` Evidence: ${recommendation.basedOnFindingIds.join(', ')}.` : ''}`)
+        );
         actionsBox.appendChild(card);
       });
+    }
+    if (!reflections.moves.length && !analysis) {
+      actionsBox.appendChild(this.element('p', 'insight-item', 'Complete onboarding and, if you choose, analyze a transcript to get relevant next steps.'));
     }
     document.getElementById('dash-course-progress-text').textContent = `${state.completedLessons.length} of 9 lessons`;
     document.getElementById('dash-course-progress-bar').style.width = `${Math.round((state.completedLessons.length / 9) * 100)}%`;

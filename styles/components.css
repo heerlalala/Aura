@@ -343,6 +343,19 @@
 .dashboard-score-method p { margin: 0.75rem 0; }
 .dashboard-score-method ul { margin: 0.5rem 0 0.75rem; padding-left: 1.25rem; }
 
+.dashboard-panel-note {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  margin: -0.35rem 0 1rem;
+}
+
+.insight-source {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
 .score-dial-container {
   position: relative;
   width: 140px;

@@ -8,6 +8,51 @@ const auraConversationService = (() => {
     conflictResponse: Object.freeze({ explain: 70, withdraw: 45, resolve: 55, return: 90 }),
     situationResponse: Object.freeze({ assume: 40, context: 90, followup: 50, revisit: 75 })
   });
+  const ONBOARDING_REFLECTIONS = Object.freeze({
+    messageResponse: Object.freeze({
+      reread: ['Rechecking unclear messages', 'You chose to reread and wonder what an unclear message means.', 'Write down the exact words separately from your interpretation, then decide whether one neutral question would help.'],
+      ask: ['Seeking direct clarification', 'You chose to ask a direct question when a message feels unclear.', 'Keep the question specific and open, so the other person can clarify without having to defend an assumption.'],
+      reply: ['Responding quickly to uncertainty', 'You chose to reply quickly to clear up an unclear message.', 'Pause briefly and identify the one thing you want clarified before sending a reply.'],
+      pause: ['Pausing before responding', 'You chose to step away and return to an unclear message later.', 'Choose a time to revisit it, so a useful pause does not become an unresolved conversation.']
+    }),
+    conflictResponse: Object.freeze({
+      explain: ['Explaining your point in detail', 'You chose to explain your point in detail when a disagreement gets tense.', 'Try stating one concern and one request at a time, then check what the other person heard.'],
+      withdraw: ['Stepping away during tension', 'You chose to go quiet or step away when a disagreement gets tense.', 'If you need a break, say that directly and suggest when you can return to the conversation.'],
+      resolve: ['Wanting to resolve tension quickly', 'You chose to try to resolve a disagreement immediately.', 'Check whether both people are ready to talk; agree on one issue to address first.'],
+      return: ['Pausing with a plan to return', 'You chose to take a pause and agree when to continue.', 'Keep using a clear return time and start again with one shared question or request.']
+    }),
+    situationResponse: Object.freeze({
+      assume: ['Worry after an unexpectedly short reply', 'You chose that a shorter-than-expected reply can make you worry something is wrong.', 'Separate what the reply literally says from what you fear it means before deciding how to respond.'],
+      context: ['Checking context before concluding', 'You chose to consider other context and ask if needed after a short reply.', 'Use the context you know; if something important remains unclear, ask one direct question.'],
+      followup: ['Following up quickly', 'You chose to send another message right away after a short reply.', 'Give the conversation some space, then send one clear follow-up only if you still need an answer.'],
+      revisit: ['Waiting until ready to respond', 'You chose to wait until you feel ready after receiving a short reply.', 'Set a time to check back in with yourself, and decide whether a response is actually needed.']
+    })
+  });
+  const SUPPORT_MOVES = Object.freeze({
+    clarify: 'Before setting a boundary, write one sentence naming what you need.',
+    wording: 'Draft one respectful sentence that names your concern and makes a clear request.',
+    facts: 'Make two short notes: what you observed and what you are interpreting.',
+    plan: 'Write the boundary and one action you will take if it is not respected.'
+  });
+  const GOAL_MOVES = Object.freeze({
+    understand: 'Choose one message and separate its observable wording from your interpretation.',
+    communicate: 'Pick one conversation and define the single point you want to communicate.',
+    practice: 'Try a draft in the practice tool, then edit it so it sounds like you.',
+    reflect: 'Note one response pattern you want to keep and one you want to try differently.'
+  });
+
+  function buildOnboardingReflections(preferences) {
+    if (!preferences || typeof preferences !== 'object') return { patterns: [], moves: [] };
+    const patterns = Object.entries(ONBOARDING_REFLECTIONS).flatMap(([key, choices]) => {
+      const reflection = choices[preferences[key]];
+      return reflection ? [{ title: reflection[0], observation: reflection[1], nextStep: reflection[2] }] : [];
+    });
+    const moves = [
+      SUPPORT_MOVES[preferences.supportNeed] && { label: 'Based on your support preference', text: SUPPORT_MOVES[preferences.supportNeed] },
+      GOAL_MOVES[preferences.goal] && { label: 'Based on your goal', text: GOAL_MOVES[preferences.goal] }
+    ].filter(Boolean);
+    return { patterns, moves };
+  }
 
   function calculateEmotionalResponseScore(preferences) {
     if (!preferences || typeof preferences !== 'object') return null;
@@ -311,6 +356,7 @@ const auraConversationService = (() => {
     MAX_BYTES,
     MAX_MESSAGES,
     calculateEmotionalResponseScore,
+    buildOnboardingReflections,
     normalizeTranscript,
     toEditableText,
     analyzeConversation,
