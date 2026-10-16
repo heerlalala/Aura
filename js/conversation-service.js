@@ -3,6 +3,28 @@
 const auraConversationService = (() => {
   const MAX_BYTES = 1024 * 1024;
   const MAX_MESSAGES = 5000;
+  const EMOTIONAL_RESPONSE_POINTS = Object.freeze({
+    messageResponse: Object.freeze({ reread: 55, ask: 85, reply: 60, pause: 90 }),
+    conflictResponse: Object.freeze({ explain: 70, withdraw: 45, resolve: 55, return: 90 }),
+    situationResponse: Object.freeze({ assume: 40, context: 90, followup: 50, revisit: 75 })
+  });
+
+  function calculateEmotionalResponseScore(preferences) {
+    if (!preferences || typeof preferences !== 'object') return null;
+    const dimensions = [
+      { key: 'messageResponse', label: 'Unclear messages' },
+      { key: 'conflictResponse', label: 'Tense conversations' },
+      { key: 'situationResponse', label: 'Unexpected short replies' }
+    ].map((dimension) => {
+      const points = EMOTIONAL_RESPONSE_POINTS[dimension.key][preferences[dimension.key]];
+      return Number.isFinite(points) ? { ...dimension, points } : null;
+    });
+    if (dimensions.some((dimension) => !dimension)) return null;
+    return {
+      score: Math.round(dimensions.reduce((total, dimension) => total + dimension.points, 0) / dimensions.length),
+      dimensions
+    };
+  }
 
   function makeId(prefix) {
     const value = globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function'
@@ -288,6 +310,7 @@ const auraConversationService = (() => {
   return Object.freeze({
     MAX_BYTES,
     MAX_MESSAGES,
+    calculateEmotionalResponseScore,
     normalizeTranscript,
     toEditableText,
     analyzeConversation,

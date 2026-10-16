@@ -302,7 +302,7 @@
         <div class="grid-3" style="margin-bottom: 1.5rem;">
           <!-- Emotional Health Card -->
           <div class="glass-panel score-card">
-              <div class="score-dial-container" aria-label="Message count, not relationship score">
+              <div class="score-dial-container" id="score-dial" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Emotional response score is calculated from your onboarding answers">
               <svg class="score-dial-svg">
                 <defs>
                   <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -315,12 +315,13 @@
               </svg>
               <div class="score-dial-text">
                 <span class="score-value" id="score-text">—</span>
-                <div class="score-label">Messages</div>
+                <div class="score-label">not available</div>
               </div>
             </div>
-            <div>
-              <h4>Selected transcript</h4>
-              <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem;">Message count from the selected conversation. It is not a relationship-quality score.</p>
+            <div class="score-description">
+              <h4 id="score-title">Emotional response snapshot</h4>
+              <p id="score-summary" style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem;">A self-reported reflection based on your onboarding answers.</p>
+              <ul id="score-breakdown" class="score-breakdown" aria-label="Score dimensions"></ul>
             </div>
           </div>
 
@@ -377,6 +378,16 @@
             </div>
           </div>
         </div>
+        <section class="glass-panel dashboard-score-method" aria-labelledby="dashboard-score-method-title">
+          <h3 id="dashboard-score-method-title">How the emotional response score is calculated</h3>
+          <p>The score is the rounded average of your answers to the first three onboarding questions. Each answer has a fixed reflection weight chosen for this app; it is not a validated psychological or personality test.</p>
+          <ul>
+            <li><strong>Unclear messages:</strong> reread and wonder 55; ask directly 85; reply quickly 60; pause and return 90.</li>
+            <li><strong>Tense conversations:</strong> explain in detail 70; go quiet or step away 45; resolve immediately 55; pause and agree when to return 90.</li>
+            <li><strong>Unexpected short replies:</strong> worry something is wrong 40; consider context and ask if needed 90; send a follow-up right away 50; wait until ready 75.</li>
+          </ul>
+          <p>Higher points reflect answers that favor pausing, checking context, or communicating directly. The last two onboarding answers help focus your experience but do not affect the score. The result describes only the answers you selected; it does not diagnose your emotions, determine your personality, or assess another person or your relationship.</p>
+        </section>
       </section>
 
       <!-- ==================== 5. CHAT UPLOAD CENTER VIEW ==================== -->

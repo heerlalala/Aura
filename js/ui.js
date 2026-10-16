@@ -16,12 +16,32 @@ const auraUI = {
 
   renderDashboard: function(state, analysis, conversation) {
     document.getElementById('dash-username').textContent = state.username || 'User';
-    document.getElementById('score-text').textContent = analysis ? String(analysis.messageCount) : '—';
-    document.querySelector('#view-dashboard .score-label').textContent = 'Messages';
-    document.querySelector('#view-dashboard .score-card h4').textContent = 'Selected transcript';
-    document.querySelector('#view-dashboard .score-card p').textContent = analysis
-      ? 'Message count from the selected transcript. It is not a relationship-quality score.'
-      : 'Analyze a transcript to see source-grounded observations here.';
+    const snapshot = auraConversationService.calculateEmotionalResponseScore(state.onboardingPreferences);
+    const scoreText = document.getElementById('score-text');
+    const scoreLabel = document.querySelector('#view-dashboard .score-label');
+    const scoreTitle = document.getElementById('score-title');
+    const scoreSummary = document.getElementById('score-summary');
+    const scoreBreakdown = document.getElementById('score-breakdown');
+    const scoreRing = document.getElementById('score-ring');
+    const scoreDial = document.getElementById('score-dial');
+    scoreTitle.textContent = 'Emotional response snapshot';
+    scoreLabel.textContent = snapshot ? 'out of 100' : 'not available';
+    scoreText.textContent = snapshot ? String(snapshot.score) : '—';
+    scoreSummary.textContent = snapshot
+      ? 'A self-reported reflection based on your first three onboarding answers. It is not a diagnosis or a measure of relationship quality.'
+      : 'Complete the reflection questions to see your personal snapshot.';
+    scoreBreakdown.replaceChildren();
+    if (snapshot) {
+      snapshot.dimensions.forEach((dimension) => {
+        scoreBreakdown.appendChild(this.element('li', '', `${dimension.label}: ${dimension.points}/100`));
+      });
+    }
+    if (scoreRing && scoreDial) {
+      const progress = snapshot ? snapshot.score : 0;
+      scoreRing.style.strokeDashoffset = String(402 * (1 - progress / 100));
+      scoreDial.setAttribute('aria-valuenow', snapshot ? String(progress) : '0');
+      scoreDial.setAttribute('aria-label', snapshot ? `Emotional response reflection score: ${progress} out of 100` : 'Emotional response score not available');
+    }
     const effort = document.getElementById('dash-effort-status');
     effort.className = 'badge badge-primary';
     effort.textContent = analysis ? `${analysis.participants.length} speaker(s)` : 'No transcript';

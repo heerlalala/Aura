@@ -318,6 +318,31 @@
   gap: 1.5rem;
 }
 
+.score-description { flex: 1; min-width: 150px; }
+
+.score-breakdown {
+  margin: 0.65rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
+.dashboard-score-method {
+  margin-top: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.dashboard-score-method h3 {
+  color: var(--text-primary);
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-score-method p { margin: 0.75rem 0; }
+.dashboard-score-method ul { margin: 0.5rem 0 0.75rem; padding-left: 1.25rem; }
+
 .score-dial-container {
   position: relative;
   width: 140px;
