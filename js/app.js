@@ -4,12 +4,14 @@ const createDefaultState = () => ({
     username: "Alex",
     relationshipStatus: "dating",
     onboardingPreferences: {
-      goal: "conflict",
-      communicationStyle: "words",
-      emotionalFocus: "anxiety",
-      privacyMode: "local"
+      messageResponse: null,
+      conflictResponse: null,
+      situationResponse: null,
+      supportNeed: null,
+      goal: null
     },
     onboarded: false,
+    onboardingVersion: 0,
     completedLessons: [],
     journalEntries: [],
     conversations: [],
@@ -95,6 +97,10 @@ const app = {
     const conversation = this.getActiveConversation();
     if (!conversation) return null;
     return this.state.analyses.find((item) => item.conversationId === conversation.id && item.analysisVersion === conversation.version) || null;
+  },
+
+  hasCompletedOnboarding: function() {
+    return Boolean(this.state.onboarded && this.state.onboardingVersion === 2);
   },
 
   setUploadStatus: function(message, isError = false) {
@@ -384,7 +390,7 @@ const app = {
     if (window.innerWidth > 968) {
       document.getElementById('sidebar').classList.remove('hidden');
     }
-    this.switchView(this.state.onboarded ? 'dashboard' : 'onboarding');
+    this.switchView(this.hasCompletedOnboarding() ? 'dashboard' : 'onboarding');
     this.renderSecurityStatus();
     this.logAudit('Firebase authentication state updated.');
   },
@@ -574,8 +580,8 @@ const app = {
     if (!this.currentUser && !publicViews.includes(viewId)) {
       viewId = 'auth';
     } else if (this.currentUser && viewId === 'auth') {
-      viewId = this.state.onboarded ? 'dashboard' : 'onboarding';
-    } else if (this.currentUser && !this.state.onboarded && !['landing', 'onboarding'].includes(viewId)) {
+      viewId = this.hasCompletedOnboarding() ? 'dashboard' : 'onboarding';
+    } else if (this.currentUser && !this.hasCompletedOnboarding() && !['landing', 'onboarding'].includes(viewId)) {
       viewId = 'onboarding';
     }
 
@@ -767,6 +773,7 @@ const app = {
     const nextBtn = document.getElementById('btn-onboard-next');
     const backBtn = document.getElementById('btn-onboard-back');
     const progress = document.getElementById('wizard-progress');
+    const answerError = document.getElementById('wizard-answer-error');
 
     const updateWizard = () => {
       // Toggle visibility
@@ -797,10 +804,17 @@ const app = {
 
       // Toggle buttons
       backBtn.style.visibility = (currentStep === 1) ? 'hidden' : 'visible';
-      nextBtn.textContent = (currentStep === totalSteps) ? 'Finish & Analyze' : 'Continue';
+      nextBtn.textContent = (currentStep === totalSteps) ? 'Finish & Open Aura' : 'Continue';
     };
 
     nextBtn.addEventListener('click', () => {
+      const currentQuestion = document.getElementById(`step-${currentStep}`);
+      if (!currentQuestion.querySelector('.wizard-option-card.selected')) {
+        answerError.classList.remove('hidden');
+        currentQuestion.querySelector('.wizard-option-card')?.focus();
+        return;
+      }
+      answerError.classList.add('hidden');
       if (currentStep < totalSteps) {
         currentStep++;
         updateWizard();
@@ -813,21 +827,20 @@ const app = {
         const nameVal = document.getElementById('onboard-name').value.trim() || "Alex";
         self.state.username = nameVal;
         
-        const selectedStatusCard = document.querySelector('#step-3 .wizard-option-card.selected');
-        self.state.relationshipStatus = selectedStatusCard ? selectedStatusCard.getAttribute('data-value') : 'dating';
-
         const selectedValue = (stepId, fallback) => {
           const selected = document.querySelector(`#${stepId} .wizard-option-card.selected`);
           return selected ? selected.getAttribute('data-value') : fallback;
         };
         self.state.onboardingPreferences = {
-          goal: selectedValue('step-1', 'conflict'),
-          communicationStyle: selectedValue('step-2', 'words'),
-          emotionalFocus: selectedValue('step-4', 'anxiety'),
-          privacyMode: selectedValue('step-5', 'local')
+          messageResponse: selectedValue('step-1', null),
+          conflictResponse: selectedValue('step-2', null),
+          situationResponse: selectedValue('step-3', null),
+          supportNeed: selectedValue('step-4', null),
+          goal: selectedValue('step-5', null)
         };
         
         self.state.onboarded = true;
+        self.state.onboardingVersion = 2;
         self.saveState();
 
         if (window.innerWidth > 968) {

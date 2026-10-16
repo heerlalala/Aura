@@ -180,7 +180,7 @@
           <form id="auth-form">
             <div class="form-group">
               <label for="auth-email">Your Email</label>
-              <input type="email" id="auth-email" class="form-input" placeholder="name@domain.com" autocomplete="email" required>
+              <input type="email" id="auth-email" class="form-input" placeholder="example@gmail.com" autocomplete="email" required>
             </div>
             <div class="form-group">
               <label for="auth-password">Password</label>
@@ -208,67 +208,65 @@
           </div>
 
           <form id="onboarding-form" onsubmit="event.preventDefault();">
-            <!-- Step 1: Goals -->
+            <p style="color:var(--text-secondary); margin-bottom:1rem;">Answer five quick personality-style and situation questions about how you approach messages, conflict, and communication practice. Your answers help focus Aura on why you are here; this is self-reflection, not a clinical personality test or diagnosis.</p>
+            <div id="wizard-answer-error" role="alert" aria-live="assertive" class="hidden" style="color:var(--danger); margin-bottom:1rem;">Choose one answer to continue.</div>
+            <!-- Step 1: self-reflection pattern -->
             <div class="wizard-step-content" id="step-1">
-              <h2>What's the main goal today?</h2>
-              <p style="color:var(--text-secondary); margin-bottom: 1.5rem;">Pick what brought you here.</p>
+              <h2>When a message feels unclear, what do you usually do first?</h2>
+              <p style="color:var(--text-secondary); margin-bottom: 1.5rem;">Choose the response that sounds most like you.</p>
               <div class="wizard-options-grid">
-                <div class="wizard-option-card selected" data-value="conflict">Ending Endless Text Wars</div>
-                <div class="wizard-option-card" data-value="boundaries">Building Boundaries That Stick</div>
-                <div class="wizard-option-card" data-value="communication">Fixing Communication Vibes</div>
-                <div class="wizard-option-card" data-value="growth">Self-Reflection & EQ Growth</div>
+                <div class="wizard-option-card" data-value="reread">Reread it and wonder what they meant</div>
+                <div class="wizard-option-card" data-value="ask">Ask a direct question</div>
+                <div class="wizard-option-card" data-value="reply">Reply quickly to clear it up</div>
+                <div class="wizard-option-card" data-value="pause">Pause and come back to it later</div>
               </div>
             </div>
 
-            <!-- Step 2: Communication Preferences -->
+            <!-- Step 2: communication style -->
             <div class="wizard-step-content hidden" id="step-2">
-              <h2>How do you handle heated talks?</h2>
-              <p style="color:var(--text-secondary); margin-bottom: 1.5rem;">Be honest—no judgment here.</p>
+              <h2>When a disagreement gets tense, what is your usual response?</h2>
+              <p style="color:var(--text-secondary); margin-bottom: 1.5rem;">There is no right answer; this helps shape practice suggestions.</p>
               <div class="wizard-options-grid">
-                <div class="wizard-option-card selected" data-value="words">Over-explaining & Paragraph Texts</div>
-                <div class="wizard-option-card" data-value="avoid">Needing 24 Hours To Cool Off</div>
-                <div class="wizard-option-card" data-value="immediate">Wanting To Settle It RIGHT NOW</div>
-                <div class="wizard-option-card" data-value="passive">Shutting Down & Leaving The Room</div>
+                <div class="wizard-option-card" data-value="explain">Explain my point in detail</div>
+                <div class="wizard-option-card" data-value="withdraw">Go quiet or step away</div>
+                <div class="wizard-option-card" data-value="resolve">Try to resolve it immediately</div>
+                <div class="wizard-option-card" data-value="return">Take a pause and agree when to return</div>
               </div>
             </div>
 
-            <!-- Step 3: Relationship Status -->
+            <!-- Step 3: situation-based reflection -->
             <div class="wizard-step-content hidden" id="step-3">
-              <h2>What's your relationship status?</h2>
-              <p style="color:var(--text-secondary); margin-bottom: 1.5rem;">This helps tailor the reality check feedback.</p>
+              <h2>You receive a shorter reply than you expected. What would you do next?</h2>
+              <p style="color:var(--text-secondary); margin-bottom: 1.5rem;">Choose what you would most likely do in that moment.</p>
               <div class="wizard-options-grid">
-                <div class="wizard-option-card selected" data-value="dating">Dating / In a Relationship</div>
-                <div class="wizard-option-card" data-value="complicated">It's Complicated 🌀</div>
-                <div class="wizard-option-card" data-value="single">Single & Working On Myself</div>
-                <div class="wizard-option-card" data-value="moving-on">Healing From A Breakup</div>
+                <div class="wizard-option-card" data-value="assume">Worry that something is wrong</div>
+                <div class="wizard-option-card" data-value="context">Consider other context, then ask if needed</div>
+                <div class="wizard-option-card" data-value="followup">Send another message right away</div>
+                <div class="wizard-option-card" data-value="revisit">Wait until I feel ready to respond</div>
               </div>
             </div>
 
-            <!-- Step 4: Emotional Objectives -->
+            <!-- Step 4: support need -->
             <div class="wizard-step-content hidden" id="step-4">
-              <h2>What do you want to conquer first?</h2>
-              <p style="color:var(--text-secondary); margin-bottom: 1.5rem;">Select your primary focus area.</p>
+              <h2>You want to set a boundary but feel unsure how to say it. What would help most?</h2>
+              <p style="color:var(--text-secondary); margin-bottom: 1.5rem;">Pick the kind of support you would use.</p>
               <div class="wizard-options-grid">
-                <div class="wizard-option-card selected" data-value="anxiety">Kicking Text Anxiety</div>
-                <div class="wizard-option-card" data-value="codependency">Quitting Codependent Habits</div>
-                <div class="wizard-option-card" data-value="assertiveness">Boosting Assertiveness</div>
-                <div class="wizard-option-card" data-value="attachment">Decoding Attachment Styles</div>
+                <div class="wizard-option-card" data-value="clarify">Clarify what I need first</div>
+                <div class="wizard-option-card" data-value="wording">Practice a clear, respectful message</div>
+                <div class="wizard-option-card" data-value="facts">Separate what happened from what I assume</div>
+                <div class="wizard-option-card" data-value="plan">Plan how to hold the boundary</div>
               </div>
             </div>
 
-            <!-- Step 5: Privacy Settings -->
+            <!-- Step 5: app purpose -->
             <div class="wizard-step-content hidden" id="step-5">
-              <h2>Choose Your Privacy Vault</h2>
-              <p style="color:var(--text-secondary); margin-bottom: 1.5rem;">How do you want your data handled?</p>
-              <div class="wizard-options-grid" style="grid-template-columns: 1fr;">
-                <div class="wizard-option-card selected" data-value="local">
-                  <strong>Local to this browser (current)</strong>
-                  <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem;">Aura stores this account’s data in browser localStorage. Aura does not encrypt it; it can be read by someone with access to this browser profile.</p>
-                </div>
-                <div class="wizard-option-card" aria-disabled="true" style="opacity:0.65; cursor:not-allowed;">
-                  <strong>Cloud sync (not available)</strong>
-                  <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem;">Aura has no transcript database or multi-device sync service.</p>
-                </div>
+              <h2>What do you want Aura to help you do?</h2>
+              <p style="color:var(--text-secondary); margin-bottom: 1.5rem;">Aura helps you reflect on conversations and practice communication; it does not predict another person’s thoughts or diagnose relationships.</p>
+              <div class="wizard-options-grid">
+                <div class="wizard-option-card" data-value="understand">Understand a conversation with evidence from the text</div>
+                <div class="wizard-option-card" data-value="communicate">Communicate more clearly and calmly</div>
+                <div class="wizard-option-card" data-value="practice">Practice wording before I send a message</div>
+                <div class="wizard-option-card" data-value="reflect">Reflect on my own communication patterns</div>
               </div>
               <div class="form-group" style="margin-top: 1.5rem;">
                 <label for="onboard-name">Enter your preferred nickname</label>

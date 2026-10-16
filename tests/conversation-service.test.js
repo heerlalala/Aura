@@ -132,3 +132,19 @@ test('a client-controlled onboarded flag cannot route an unauthenticated user in
   assert.equal(fake.state.currentView, 'auth');
   assert.equal(rendered, 'auth');
 });
+
+test('users must complete the current onboarding questions before opening the dashboard', () => {
+  let rendered = '';
+  const fake = {
+    currentUser: { uid: 'uid-one' },
+    state: { onboarded: true, onboardingVersion: 1, currentView: 'dashboard' },
+    hasCompletedOnboarding: controller.hasCompletedOnboarding,
+    saveState() {},
+    renderCurrentView() { rendered = this.state.currentView; },
+    logAudit() {},
+    announceA11y() {}
+  };
+  controller.switchView.call(fake, 'dashboard');
+  assert.equal(fake.state.currentView, 'onboarding');
+  assert.equal(rendered, 'onboarding');
+});
