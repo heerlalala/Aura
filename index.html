@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aura — AI Relationship & Personal Growth Coach</title>
-  <meta name="description" content="Aura is a privacy-first AI relationship coach providing evidence-based insights, communication simulator feedback, and personal growth roadmaps.">
+  <title>Aura — Conversation Notes & Personal Growth</title>
+  <meta name="description" content="Review conversation text with local language-marker heuristics, practice alternative wording, and keep notes in this browser.">
   <link rel="stylesheet" href="styles/main.css">
   <link rel="stylesheet" href="styles/navigation.css">
   <link rel="stylesheet" href="styles/components.css">
@@ -127,6 +127,7 @@
 
     <!-- Main Content Panel -->
     <main id="main-content" role="main">
+      <div id="app-status" role="status" aria-live="polite" style="min-height:0; margin:0 0 0.5rem; color:var(--text-secondary);"></div>
 
 
       <!-- ==================== 1. LANDING / WELCOME VIEW ==================== -->
@@ -145,7 +146,7 @@
           <div class="landing-feature-card glass-panel">
             <div class="landing-feature-icon">🔍</div>
             <h3>Read Between the Texts</h3>
-            <p>Paste a chat or add screenshots. Spot the patterns, see where the effort is coming from, and find the moment the conversation shifted.</p>
+            <p>Paste or import text and JSON conversations. Review local wording markers with references to the messages that contain them.</p>
           </div>
           <div class="landing-feature-card glass-panel">
             <div class="landing-feature-icon">⚡</div>
@@ -155,7 +156,7 @@
           <div class="landing-feature-card glass-panel">
             <div class="landing-feature-icon">🎭</div>
             <h3>Try It Before You Send It</h3>
-            <p>That 2 AM draft can wait a minute. See how your reply might land, then shape it into something that sounds like you.</p>
+            <p>Try alternative wording in a fictional practice conversation before deciding what you want to send.</p>
           </div>
         </div>
 
@@ -261,12 +262,12 @@
               <p style="color:var(--text-secondary); margin-bottom: 1.5rem;">How do you want your data handled?</p>
               <div class="wizard-options-grid" style="grid-template-columns: 1fr;">
                 <div class="wizard-option-card selected" data-value="local">
-                  <strong>Local-Only Vault (Recommended)</strong>
-                  <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem;">Chats, transcripts, and scores stay locked inside this browser session. Zero data leaks, zero cloud logs.</p>
+                  <strong>Local to this browser (current)</strong>
+                  <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem;">Aura stores this account’s data in browser localStorage. Aura does not encrypt it; it can be read by someone with access to this browser profile.</p>
                 </div>
-                <div class="wizard-option-card" data-value="cloud">
-                  <strong>Cloud Sync Mode</strong>
-                  <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem;">Store encrypted logs in cloud caches for multi-device sync.</p>
+                <div class="wizard-option-card" aria-disabled="true" style="opacity:0.65; cursor:not-allowed;">
+                  <strong>Cloud sync (not available)</strong>
+                  <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem;">Aura has no transcript database or multi-device sync service.</p>
                 </div>
               </div>
               <div class="form-group" style="margin-top: 1.5rem;">
@@ -288,11 +289,11 @@
         <div class="view-header">
           <div>
             <h2>Welcome Back, <span id="dash-username">Alex</span></h2>
-            <p>Here's your real-time relationship check and active insights.</p>
+            <p>Your local conversation notes, saved reflections, and learning progress.</p>
           </div>
           <!-- Straight-Answer Mode quick switch in header -->
           <div class="mode-toggle-card glass-panel" id="dash-straight-toggle" style="margin-bottom: 0; padding: 0.5rem 1rem; border-radius: var(--radius-md);">
-            <span style="font-size: 0.85rem; font-weight:600; margin-right: 0.75rem; color: var(--accent);">Straight-Answer Mode</span>
+            <span style="font-size: 0.85rem; font-weight:600; margin-right: 0.75rem; color: var(--accent);">Concise Evidence Notes</span>
             <label class="switch">
               <input type="checkbox" id="global-straight-switch">
               <span class="slider"></span>
@@ -303,7 +304,7 @@
         <div class="grid-3" style="margin-bottom: 1.5rem;">
           <!-- Emotional Health Card -->
           <div class="glass-panel score-card">
-            <div class="score-dial-container">
+              <div class="score-dial-container" aria-label="Message count, not relationship score">
               <svg class="score-dial-svg">
                 <defs>
                   <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -315,30 +316,30 @@
                 <circle class="score-dial-fill" id="score-ring" cx="70" cy="70" r="64"></circle>
               </svg>
               <div class="score-dial-text">
-                <span class="score-value" id="score-text">78</span>
-                <div class="score-label">Vibe Score</div>
+                <span class="score-value" id="score-text">—</span>
+                <div class="score-label">Messages</div>
               </div>
             </div>
             <div>
-              <h4>Relationship Vibe</h4>
-              <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem;">Overall communication harmony based on recent chat breakdowns.</p>
+              <h4>Selected transcript</h4>
+              <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem;">Message count from the selected conversation. It is not a relationship-quality score.</p>
             </div>
           </div>
 
           <!-- Compatibility Summary -->
           <div class="glass-panel" style="padding: 1.5rem;">
-            <h4 style="margin-bottom: 0.75rem;">Relationship Dynamic</h4>
+                  <h4 style="margin-bottom: 0.75rem;">Selected transcript</h4>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
-              <span style="font-size: 0.9rem; color: var(--text-secondary)">Mutual Effort</span>
-              <span class="badge badge-success" id="dash-effort-status">Balanced (52%)</span>
+              <span style="font-size: 0.9rem; color: var(--text-secondary)">Speakers</span>
+              <span class="badge badge-primary" id="dash-effort-status">No transcript</span>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
-              <span style="font-size: 0.9rem; color: var(--text-secondary)">Emotional Openness</span>
-              <span class="badge badge-primary">High</span>
+              <span style="font-size: 0.9rem; color: var(--text-secondary)">Source</span>
+              <span class="badge badge-primary">—</span>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-size: 0.9rem; color: var(--text-secondary)">Attachment Vibe</span>
-              <span class="badge badge-warning" id="dash-attachment-status">Anxious-Avoidant</span>
+              <span style="font-size: 0.9rem; color: var(--text-secondary)">Topic markers</span>
+              <span class="badge badge-primary">Not analyzed</span>
             </div>
           </div>
 
@@ -385,30 +386,37 @@
         <div class="view-header">
           <div>
             <h2>Chat Upload Center</h2>
-            <p>Drop text files, screenshots, or copy-pasted messages to get an instant breakdown.</p>
+            <p>Import a text or JSON transcript, review it, then run a private local heuristic scan. Transcript content stays in this browser.</p>
           </div>
+        </div>
+
+        <div class="glass-panel" style="padding:1rem 1.25rem; margin-bottom:1rem; display:flex; flex-wrap:wrap; align-items:end; gap:0.75rem;">
+          <div class="form-group" style="margin:0; flex:1; min-width:220px;">
+            <label for="conversation-select">Saved conversations on this browser</label>
+            <select id="conversation-select" class="form-input"><option value="">No saved conversation selected</option></select>
+          </div>
+          <button class="btn btn-secondary" type="button" id="btn-new-conversation">New conversation</button>
+          <button class="btn btn-danger" type="button" id="btn-delete-conversation" disabled>Delete selected</button>
         </div>
 
         <div class="grid-2">
           <!-- Left side: upload controls -->
           <div class="expand-detail-container">
-            <div class="glass-panel dropzone" id="chat-dropzone">
+            <div class="glass-panel dropzone" id="chat-dropzone" tabindex="0" role="button" aria-label="Choose or drop a text or JSON transcript">
               <div class="dropzone-icon">📤</div>
-              <h3>Drag & Drop Chats Here</h3>
-              <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">Supports WhatsApp exports (.txt), screenshot images, or copied texts</p>
+              <h3>Choose or Drop a Transcript</h3>
+              <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">Text (.txt) and JSON messages (.json), up to 1 MiB. Images and scanned PDFs are not supported.</p>
               <div style="margin-top: 1rem;">
-                <span class="btn btn-secondary">Choose File</span>
-                <input type="file" id="chat-file-input" style="display:none;" accept=".txt,.json,image/*">
+                <label class="btn btn-secondary" for="chat-file-input" style="cursor:pointer;">Choose File</label>
+                <input type="file" id="chat-file-input" style="display:none;" accept=".txt,.json,text/plain,application/json">
               </div>
-              <div id="upload-file-status" style="margin-top: 1rem; font-size:0.9rem; color:var(--success);" class="hidden">
-                ✓ File parsed successfully!
-              </div>
+              <div id="upload-file-status" role="status" aria-live="polite" style="margin-top: 1rem; font-size:0.9rem;"></div>
             </div>
 
             <!-- Pre-loaded sample conversations for testing -->
             <div class="glass-panel" style="padding: 1.5rem;">
               <h4 style="margin-bottom: 0.75rem;">Try A Sample Conversation</h4>
-              <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom: 1rem;">Pick a pre-loaded chat scenario to test the reality check engine instantly.</p>
+              <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom: 1rem;">Load a clearly labeled sample transcript. It is analyzed locally like an imported transcript.</p>
               <div style="display:flex; flex-direction:column; gap:0.5rem;">
                 <button class="btn btn-secondary" style="justify-content: flex-start;" id="btn-sample-anxious">
                   💬 Sample 1: The "Why Are You Ignoring Me?" Fight
@@ -426,7 +434,7 @@
           <!-- Right side: Paste area -->
           <div class="glass-panel paste-box" style="margin-top:0; padding:1.5rem; display:flex; flex-direction:column;">
             <h3 style="margin-bottom: 0.5rem;">Paste Conversation Transcript</h3>
-            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1rem;">Paste directly from your messaging app. Use format "Name: message text", one per line.</p>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1rem;">Review and edit before analysis. Use “Name: message text” per line; timestamps and continuation lines are retained.</p>
             <textarea id="pasted-chat-text" class="form-textarea" style="flex:1; min-height: 250px; font-family: monospace; font-size:0.9rem;" placeholder="Taylor: Why haven't you replied all day?&#10;Alex: I was in meetings, I told you that.&#10;Taylor: It takes 5 seconds to send a text. You are ignoring me."></textarea>
             <button class="btn btn-primary" style="margin-top: 1rem; align-self: flex-end;" id="btn-analyze-paste">Run Analysis 🚀</button>
           </div>
@@ -438,159 +446,29 @@
         <div class="view-header">
           <div>
             <h2>Conversation Breakdown</h2>
-            <p id="analysis-report-title">Analyzing chat logs between Alex and Taylor</p>
+            <p id="analysis-report-title">Choose or add a transcript to see source-grounded observations.</p>
           </div>
-          <button class="btn btn-secondary" id="btn-export-pdf">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.25rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-            Download PDF Report
-          </button>
+          <button class="btn btn-secondary" id="btn-export-pdf" disabled>Print / Save Report as PDF</button>
         </div>
-
-        <div class="analysis-tabs">
-          <button class="analysis-tab-btn active" data-tab="summary">Overview</button>
-          <button class="analysis-tab-btn" data-tab="tone">Tone Breakdown</button>
-          <button class="analysis-tab-btn" data-tab="dynamics">Dynamics & Balance</button>
-          <button class="analysis-tab-btn" data-tab="flags">Red & Green Flags</button>
-        </div>
-
-        <!-- Tab 1: Overview Summary -->
-        <div class="analysis-tab-content" id="analysis-tab-summary">
-          <div class="grid-3" style="margin-bottom:1.5rem;">
-            <div class="glass-panel score-card" style="padding:1.5rem;">
-              <div class="score-dial-container">
-                <svg class="score-dial-svg">
-                  <circle class="score-dial-bg" cx="70" cy="70" r="64"></circle>
-                  <circle class="score-dial-fill" id="report-score-ring" cx="70" cy="70" r="64"></circle>
-                </svg>
-                <div class="score-dial-text">
-                  <span class="score-value" id="report-score-val">82</span>
-                  <div class="score-label">Harmony</div>
-                </div>
-              </div>
-              <div>
-                <h5>Report Score</h5>
-                <p style="font-size:0.75rem; color:var(--text-secondary);">Overall quality of conflict resolution.</p>
-              </div>
-            </div>
-
-            <div class="glass-panel" style="padding:1.5rem;">
-              <h5>Escalation Risk</h5>
-              <div id="report-urgency-badge" style="margin-top:0.5rem; display:inline-block;"></div>
-              <p style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.75rem;" id="report-urgency-description">Analysis detects low levels of defensive friction.</p>
-            </div>
-
-            <div class="glass-panel" style="padding:1.5rem;">
-              <h5>Primary Escalation Trigger</h5>
-              <p style="font-size:1.1rem; font-weight:600; margin-top:0.5rem;" id="report-trigger-text">Delayed Responses</p>
-              <p style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.25rem;">This trigger caused most of the friction in this chat.</p>
-            </div>
+        <p id="analysis-method-note" class="glass-panel" role="status" style="padding:0.85rem 1rem; color:var(--text-secondary);">No transcript has been analyzed.</p>
+        <div id="analysis-current" class="hidden">
+          <div class="grid-3" style="margin:1rem 0;">
+            <div class="glass-panel" style="padding:1.25rem;"><h4>Messages analyzed</h4><p id="analysis-message-count" style="font-size:1.5rem; margin-top:0.4rem;">0</p></div>
+            <div class="glass-panel" style="padding:1.25rem;"><h4>Speakers</h4><p id="analysis-speakers" style="margin-top:0.4rem;">—</p></div>
+            <div class="glass-panel" style="padding:1.25rem;"><h4>Source</h4><p id="analysis-source-name" style="margin-top:0.4rem; overflow-wrap:anywhere;">—</p></div>
           </div>
-
-          <div class="glass-panel" style="padding: 2rem; margin-bottom: 1.5rem;">
-            <h3>Executive Summary</h3>
-            <p style="margin-top:0.75rem; color:var(--text-secondary);" id="report-summary-text">
-
-              The conversation demonstrates an anxious-avoidant pursuit dynamic. Alex (Anxious style) is seeking immediate reassurance, while Taylor (Avoidant style) is withdrawing in response to perceived criticism. This results in an escalatory loop that resolves only when one partner yields entirely.
-            </p>
+          <div class="glass-panel" style="padding:1.5rem; margin-bottom:1rem;">
+            <h3>What the text scan found</h3>
+            <p id="analysis-summary" style="margin-top:0.75rem; color:var(--text-secondary);"></p>
+            <p id="analysis-limitations" style="margin-top:0.65rem; font-size:0.85rem; color:var(--text-muted);"></p>
           </div>
-        </div>
-
-        <!-- Tab 2: Tone Analysis -->
-        <div class="analysis-tab-content hidden" id="analysis-tab-tone">
           <div class="grid-2">
-            <!-- User Tone Chart -->
-            <div class="glass-panel" style="padding: 1.5rem;">
-              <h4 id="report-user-tone-title">Alex's Emotional Tone</h4>
-              <div class="bar-chart-container" id="report-user-tone-chart">
-                <!-- Dynamically generated bars -->
-              </div>
-            </div>
-
-            <!-- Partner Tone Chart -->
-            <div class="glass-panel" style="padding: 1.5rem;">
-              <h4 id="report-partner-tone-title">Taylor's Emotional Tone</h4>
-              <div class="bar-chart-container" id="report-partner-tone-chart">
-                <!-- Dynamically generated bars -->
-              </div>
-            </div>
+            <div class="glass-panel" style="padding:1.5rem;"><h3>Observed language markers</h3><div id="analysis-findings" style="margin-top:1rem;"></div></div>
+            <div class="glass-panel" style="padding:1.5rem;"><h3>Possible next steps</h3><div id="analysis-recommendations" style="margin-top:1rem;"></div></div>
           </div>
+          <div class="glass-panel" style="padding:1.5rem; margin-top:1rem;"><h3>Transcript evidence</h3><div id="analysis-evidence" style="margin-top:1rem; max-height:32rem; overflow:auto;"></div></div>
         </div>
-
-        <!-- Tab 3: Dynamics & Balance -->
-        <div class="analysis-tab-content hidden" id="analysis-tab-dynamics">
-          <div class="grid-2">
-            <div class="glass-panel" style="padding: 1.5rem; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
-              <h4>Conversation Effort Balance</h4>
-              <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom: 1.5rem;">Measured by word count and frequency of messaging initiation.</p>
-              
-              <!-- SVG Effort Balance visualizer -->
-              <div style="position:relative; width: 220px; height: 120px; margin-bottom:1rem;">
-                <svg width="220" height="120">
-                  <path d="M 20,90 Q 110,20 200,90" fill="none" stroke="rgba(181, 77, 98, 0.08)" stroke-width="12" stroke-linecap="round"></path>
-                  <path d="M 20,90 Q 110,20 200,90" id="effort-scale-path" fill="none" stroke="url(#scoreGradient)" stroke-width="12" stroke-linecap="round" stroke-dasharray="290" stroke-dashoffset="145"></path>
-                  <!-- Scale Indicator pointer -->
-                  <circle cx="110" cy="55" r="8" fill="var(--accent)" id="effort-scale-pointer"></circle>
-                </svg>
-                <div style="position:absolute; bottom:10px; width:100%; display:flex; justify-content:space-between; font-size:0.8rem; font-weight:600; color:var(--text-secondary);">
-                  <span id="effort-label-left">Alex (50%)</span>
-                  <span id="effort-label-right">Taylor (50%)</span>
-                </div>
-              </div>
-              <p style="font-weight: 500;" id="effort-summary-msg">Effort is perfectly distributed in this interaction.</p>
-            </div>
-
-            <div class="glass-panel" style="padding: 1.5rem;">
-              <h4>Trust & Compatibility Analysis</h4>
-              <div style="margin-top: 1rem; display:flex; flex-direction:column; gap:1rem;">
-                <div>
-                  <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:0.25rem;">
-                    <span>Trust Safety Index</span>
-                    <span id="report-trust-val">74%</span>
-                  </div>
-                  <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:3px; overflow:hidden;">
-                    <div style="width:74%; height:100%; background:var(--primary);" id="report-trust-bar"></div>
-                  </div>
-                </div>
-                <div>
-                  <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:0.25rem;">
-                    <span>Emotional Vulnerability Level</span>
-                    <span id="report-vuln-val">60%</span>
-                  </div>
-                  <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:3px; overflow:hidden;">
-                    <div style="width:60%; height:100%; background:var(--secondary);" id="report-vuln-bar"></div>
-                  </div>
-                </div>
-                <div>
-                  <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:0.25rem;">
-                    <span>Defensiveness Level</span>
-                    <span id="report-defense-val">45%</span>
-                  </div>
-                  <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:3px; overflow:hidden;">
-                    <div style="width:45%; height:100%; background:var(--danger);" id="report-defense-bar"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Tab 4: Red & Green Flags -->
-        <div class="analysis-tab-content hidden" id="analysis-tab-flags">
-          <div class="grid-2">
-            <div>
-              <h3 style="color:var(--danger); margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">🚩 Detected Red Flags</h3>
-              <div id="report-red-flags">
-                <!-- JS inserted flags -->
-              </div>
-            </div>
-            <div>
-              <h3 style="color:var(--success); margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">🟢 Detected Green Flags</h3>
-              <div id="report-green-flags">
-                <!-- JS inserted flags -->
-              </div>
-            </div>
-          </div>
-        </div>
+        <div id="print-report" aria-hidden="true"></div>
       </section>
 
       <!-- ==================== 7. REALITY CHECK ENGINE VIEW ==================== -->
@@ -598,15 +476,15 @@
         <div class="view-header">
           <div>
             <h2>Reality Check Engine</h2>
-            <p>Get unfiltered feedback, spot your blind spots, and translate angry drafts into clean boundaries.</p>
+            <p>Review the same transcript observations and possible next steps. This local scan does not judge people or infer intent.</p>
           </div>
         </div>
 
         <!-- Straight Answer Mode Toggle Box -->
         <div class="glass-panel mode-toggle-card straight-answer-active" id="reality-straight-toggle" style="margin-bottom: 2rem; padding:1.25rem 2rem;">
           <div>
-            <h3>Straight-Answer Mode</h3>
-            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top:0.25rem;">Disable therapeutic sugarcoating. Aura states findings with raw, objective honesty.</p>
+            <h3>Concise evidence notes</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top:0.25rem;">Choose concise or detailed wording for the same transcript-linked observations.</p>
           </div>
           <label class="switch">
             <input type="checkbox" id="reality-straight-switch" checked>
@@ -620,27 +498,18 @@
             <div>
               <h3 style="color: var(--accent); margin-bottom:0.75rem;">Unfiltered Breakdown</h3>
               <p style="font-size:0.95rem; color:var(--text-primary); font-family: monospace; white-space: pre-line;" id="reality-talk-content">
-                Loading assessment... Drop a conversation in the Upload Center first.
+                Select an analyzed conversation to view its observations and possible next steps.
               </p>
-            </div>
-            <div style="margin-top:1.5rem; border-top:1px solid var(--border-color); padding-top:1rem;">
-              <h5 style="margin-bottom:0.5rem;">Responsibility Split</h5>
-              <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.25rem;">
-                <span id="slider-user-label">Alex (50%)</span>
-                <span id="slider-partner-label">Taylor (50%)</span>
-              </div>
-              <input type="range" min="0" max="100" value="50" class="reality-rating-slider" id="reality-responsibility-slider" disabled>
-              <small style="color:var(--text-muted); display:block; margin-top:0.5rem; text-align:center;">Assessed accountability split based on conversation triggers.</small>
             </div>
           </div>
 
           <!-- Boundary Translation Widget -->
           <div class="glass-panel" style="padding:1.5rem; display:flex; flex-direction:column;">
             <h3>Boundary & Response Translator</h3>
-            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom: 1rem;">Draft a high-emotion response. We'll convert it into a constructive, boundary-respecting text.</p>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom: 1rem;">Draft a response and get an editable template that preserves your stated concern. It does not infer anyone’s intent.</p>
             
             <div class="form-group" style="flex:1; display:flex; flex-direction:column;">
-              <label for="boundary-draft-input">Draft Message (High Emotion / Angry)</label>
+              <label for="boundary-draft-input">Draft message</label>
               <textarea id="boundary-draft-input" class="form-textarea" style="flex:1; min-height: 120px;" placeholder="e.g. Fine, don't talk to me. You always do this and ignore me for hours, it's so selfish."></textarea>
             </div>
 
@@ -651,7 +520,7 @@
             </div>
 
             <div class="form-group" style="flex:1; display:flex; flex-direction:column;">
-              <label>Translated Boundary Suggestion</label>
+              <label>Possible wording template</label>
               <div id="boundary-translation-output" class="form-input" style="flex:1; min-height: 120px; background:rgba(255, 181, 192, 0.08); border-color:var(--border-color); overflow-y:auto; color:var(--text-secondary); font-style:italic;">
                 Translations will appear here. Enter text and press the sparkles button.
               </div>
@@ -665,7 +534,7 @@
         <div class="view-header">
           <div>
             <h2>Conversation Simulator</h2>
-            <p>Practice tough talks before hitting send. See how your partner might react in real time.</p>
+            <p>Practice alternative wording using the selected transcript as context. Replies are fictional exercises, not predictions of another person’s behavior.</p>
           </div>
           <button class="btn btn-secondary" id="btn-reset-simulator">Reset Simulator</button>
         </div>
@@ -673,39 +542,34 @@
         <div class="grid-2">
           <!-- Chat interface panel -->
           <div class="simulator-layout">
+            <div id="sim-context-note" class="insight-item" role="status">Select and analyze a conversation first. Practice content is fictional.</div>
+            <div class="form-group" style="margin:0.75rem 0;">
+              <label for="sim-objective">Practice objective</label>
+              <select id="sim-objective" class="form-input">
+                <option value="clarification">Ask for clarification</option>
+                <option value="boundary">State a boundary</option>
+                <option value="deescalation">De-escalate</option>
+                <option value="repair">Acknowledge and repair</option>
+              </select>
+            </div>
             <div class="simulator-chat-area" id="sim-chat-box">
               <!-- JS rendered bubbles -->
             </div>
             
             <div class="simulator-input-area">
-              <input type="text" id="sim-input-text" class="form-input" placeholder="Type a draft response to test...">
-              <button class="btn btn-primary" id="btn-sim-send">Send</button>
+              <input type="text" id="sim-input-text" class="form-input" maxlength="2000" placeholder="Write or edit your practice response…" aria-label="Your practice response" disabled>
+              <button class="btn btn-primary" id="btn-sim-send" disabled>Continue practice</button>
             </div>
           </div>
 
           <!-- Outcome Prediction Panel -->
           <div class="expand-detail-container">
             <div class="glass-panel" style="padding: 1.5rem;">
-              <h3>Live Outcome Prediction</h3>
-              <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom: 1.5rem;">Calculated in real-time as you compose and send messages.</p>
-
-              <div class="prediction-radial-container">
-                <div class="radial-progress-bar">
-                  <div style="font-size:1.75rem; font-weight:800; color:var(--success);" id="predict-success-val">--%</div>
-                  <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase; margin-top:0.25rem;">Positive Resolution</div>
-                </div>
-                <div class="radial-progress-bar">
-                  <div style="font-size:1.75rem; font-weight:800; color:var(--warning);" id="predict-defense-val">--%</div>
-                  <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase; margin-top:0.25rem;">Defensiveness Risk</div>
-                </div>
-                <div class="radial-progress-bar">
-                  <div style="font-size:1.75rem; font-weight:800; color:var(--danger);" id="predict-withdrawal-val">--%</div>
-                  <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase; margin-top:0.25rem;">Withdrawal Risk</div>
-                </div>
-              </div>
+              <h3>Draft wording check</h3>
+              <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom: 1.5rem;">Checks wording markers in your draft. It cannot predict another person’s response.</p>
 
               <div id="sim-prediction-alert" class="insight-item" style="margin-top:2rem; margin-bottom:0;">
-                Start typing messages to begin prediction scoring.
+                Draft wording notes will appear here. Aura cannot predict another person’s response.
               </div>
             </div>
 
@@ -713,7 +577,7 @@
             <div class="glass-panel" style="padding: 1.5rem;">
               <h4 style="color:var(--secondary); margin-bottom:0.5rem;">💡 Simulator Strategy Note</h4>
               <p style="font-size:0.9rem; color:var(--text-secondary);" id="sim-advice-text">
-                Try using an "I" statement (e.g. "I feel anxious when we go hours without talking because...") instead of a "You" statement to lower your partner's predicted defensiveness.
+                Recommendations from the selected conversation will appear here after analysis.
               </p>
             </div>
           </div>
@@ -787,14 +651,7 @@
               <h3 id="course-lesson-title">Lesson Title</h3>
               <span class="badge badge-primary" id="course-lesson-badge" style="margin: 0.5rem 0 1rem 0;">Emotional Intelligence</span>
               
-              <!-- Mock Audio Meditation Player -->
-              <div class="audio-player-mock">
-                <div class="audio-controls" id="btn-audio-toggle">▶ Play Audio Guide</div>
-                <div class="audio-track-line">
-                  <div class="audio-track-progress"></div>
-                </div>
-                <span style="font-size:0.75rem; color:var(--text-secondary)">03:15</span>
-              </div>
+              <p class="insight-item" style="margin:0 0 1rem;">Audio guides are not available. Aura does not record, upload, or store audio, so no audio is being encrypted.</p>
 
               <div style="font-size:0.95rem; color:var(--text-secondary); margin-bottom: 1.5rem;" id="course-lesson-body">
                 Lesson body content...
@@ -814,7 +671,7 @@
         <div class="view-header">
           <div>
             <h2>Settings & Controls</h2>
-            <p>Manage local encryption, data exports, or clear your local cache.</p>
+            <p>Manage this browser’s local data. Transcript and journal data are not encrypted by Aura and do not sync across devices.</p>
           </div>
         </div>
 
@@ -825,29 +682,17 @@
             <div style="margin-top: 1.5rem; display:flex; flex-direction:column; gap:1.25rem;">
               <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div>
-                  <h4 style="font-size: 0.95rem;">End-to-End Local Encryption</h4>
-                  <p style="font-size:0.8rem; color:var(--text-secondary);">Keep all files and chat metrics locked inside local browser storage.</p>
+                  <h4 style="font-size: 0.95rem;">Local data protection</h4>
+                  <p style="font-size:0.8rem; color:var(--text-secondary);">Data is stored in this browser’s localStorage. It is not encrypted by Aura; anyone with access to this browser profile may be able to read it.</p>
                 </div>
-                <label class="switch">
-                  <input type="checkbox" id="settings-local-encrypt" checked>
-                  <span class="slider"></span>
-                </label>
               </div>
 
               <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div>
-                  <h4 style="font-size: 0.95rem;">MFA Login Requirement</h4>
-                  <p style="font-size:0.8rem; color:var(--text-secondary);">Enforce multi-factor verification codes for login.</p>
+                  <h4 style="font-size: 0.95rem;">Authentication & multi-factor status</h4>
+                  <p id="security-auth-status" style="font-size:0.8rem; color:var(--text-secondary);">Sign in to view authentication methods reported by Firebase.</p>
+                  <p id="security-mfa-status" style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.35rem;">MFA enrollment is unavailable in this app. Firebase MFA requires Authentication with Identity Platform and verified email; project settings have not been checked.</p>
                 </div>
-                <label class="switch">
-                  <input type="checkbox" id="settings-mfa-req">
-                  <span class="slider"></span>
-                </label>
-              </div>
-
-              <div class="form-group" style="margin-bottom:0;">
-                <label for="settings-mock-key">Personal AI Core (Mock API Key override)</label>
-                <input type="password" id="settings-mock-key" class="form-input" placeholder="sk-proj-••••••••••••••••" value="sk-auramockkey1239840294812">
               </div>
             </div>
           </div>
@@ -856,7 +701,7 @@
           <div class="glass-panel" style="padding: 1.5rem; display:flex; flex-direction:column; justify-content:space-between;">
             <div>
               <h3>Data Vault Controls</h3>
-              <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem; margin-bottom:1.5rem;">Aura stores all calculations in the browser database. You have full ownership of your metrics.</p>
+              <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem; margin-bottom:1.5rem;">Aura stores transcript text, analysis references, journal entries, and practice sessions under the signed-in Firebase UID in this browser. This is localStorage, not a secure database.</p>
 
               <div style="display:flex; flex-direction:column; gap:0.75rem;">
                 <button class="btn btn-secondary" style="justify-content:flex-start;" id="btn-export-settings-data">
@@ -872,9 +717,7 @@
             <div style="margin-top: 1.5rem; border-top:1px solid var(--border-color); padding-top: 1rem;">
               <h4 style="font-size:0.9rem; margin-bottom:0.5rem;">Security Audit Logs</h4>
               <div style="background:rgba(181, 77, 98, 0.05); border-radius:var(--radius-md); padding:0.75rem; font-family:monospace; font-size:0.75rem; color:var(--text-secondary); max-height:100px; overflow-y:auto;" id="settings-audit-logs">
-                [2026-06-22 17:30] Session initialized.<br>
-                [2026-06-22 17:31] Encryption key generated.<br>
-                [2026-06-22 17:32] Security modules checked OK.
+                No recent security events.
               </div>
             </div>
           </div>
@@ -886,13 +729,13 @@
         <div style="display:flex; align-items:center; gap:0.75rem; color:white;">
           <span style="font-size:1.5rem;">⚠️</span>
           <div>
-            <strong style="display:block;">Crisis Distress Detected</strong>
-            <span style="font-size:0.85rem; opacity:0.9;">Your message triggers suggest heightened emotional distress. Please review emergency resources or call 988.</span>
+            <strong style="display:block;">Potential crisis-related wording</strong>
+            <span style="font-size:0.85rem; opacity:0.9;">A simple keyword check noticed wording that may relate to self-harm. This can be wrong and is not an assessment. If you may be in immediate danger, contact local emergency services. In the U.S. or its territories, call or text 988.</span>
           </div>
         </div>
         <div style="display:flex; gap:0.5rem;">
-          <button class="btn btn-secondary" style="background:rgba(255,255,255,0.15); border:none; padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="window.open('https://988lifeline.org/')">988 Hotline</button>
-          <button class="btn btn-secondary" style="background:transparent; border:none; padding:0.4rem; font-size:0.8rem;" id="btn-close-crisis-banner">✕</button>
+          <a class="btn btn-secondary" style="background:rgba(255,255,255,0.15); border:none; padding:0.4rem 0.8rem; font-size:0.8rem;" href="https://988lifeline.org/" target="_blank" rel="noopener noreferrer">988 Lifeline</a>
+          <button class="btn btn-secondary" style="background:transparent; border:none; padding:0.4rem; font-size:0.8rem;" id="btn-close-crisis-banner" aria-label="Dismiss crisis resources">✕</button>
         </div>
       </div>
 
@@ -901,6 +744,7 @@
 
   <!-- Scripts -->
   <script src="js/data.js"></script>
+  <script src="js/conversation-service.js"></script>
   <script src="js/engines.js"></script>
   <script src="js/ui.js"></script>
   <script type="module" src="js/firebase.js"></script>

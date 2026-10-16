@@ -12,21 +12,27 @@ const createDefaultState = () => ({
     onboarded: false,
     completedLessons: [],
     journalEntries: [],
+    conversations: [],
+    analyses: [],
+    activeConversationId: null,
     simMessages: [],
-    activeAnalysis: null,
+    simConversationId: null,
+    simAnalysisVersion: null,
+    simulationObjective: 'clarification',
     straightAnswerMode: true,
     currentView: "landing",
     currentCourse: null,
-    currentLessonIndex: 0,
-    audioPlaying: false,
-    audioProgress: 0,
-    audioInterval: null
+    currentLessonIndex: 0
 });
 
 const app = {
   state: createDefaultState(),
   currentUser: null,
   authBusy: false,
+  analysisBusy: false,
+  pendingImport: null,
+  draftHasChanges: false,
+  storageUnavailable: false,
 
   // Initialize App
   init: function() {
@@ -51,7 +57,11 @@ const app = {
     firebase.onAuthStateChanged(firebase.auth, (user) => {
       this.handleAuthStateChanged(user);
     }, (error) => {
+      if (this.currentUser) this.clearPrivateSessionUI();
       this.currentUser = null;
+      this.state = createDefaultState();
+      this.renderConversationPicker();
+      this.renderSecurityStatus();
       this.switchView('landing');
       this.showAuthMessage(this.getFriendlyAuthError(error), true);
     });
@@ -65,32 +75,304 @@ const app = {
 
   saveState: function() {
     const key = this.storageKey();
-    if (!key) return;
-    localStorage.setItem(key, JSON.stringify(this.state));
+    if (!key) return false;
+    try {
+      localStorage.setItem(key, JSON.stringify(this.state));
+      this.storageUnavailable = false;
+      return true;
+    } catch (_) {
+      this.storageUnavailable = true;
+      this.setUploadStatus('Aura could not save to this browser’s storage. Export your work or free browser storage space before continuing.', true);
+      return false;
+    }
+  },
+
+  getActiveConversation: function() {
+    return this.state.conversations.find((item) => item.id === this.state.activeConversationId) || null;
+  },
+
+  getActiveAnalysis: function() {
+    const conversation = this.getActiveConversation();
+    if (!conversation) return null;
+    return this.state.analyses.find((item) => item.conversationId === conversation.id && item.analysisVersion === conversation.version) || null;
+  },
+
+  setUploadStatus: function(message, isError = false) {
+    const status = document.getElementById('upload-file-status');
+    const globalStatus = document.getElementById('app-status');
+    [status, globalStatus].filter(Boolean).forEach((element) => {
+      element.textContent = message || '';
+      element.style.color = isError ? 'var(--danger)' : 'var(--text-secondary)';
+      element.setAttribute('role', isError ? 'alert' : 'status');
+    });
+  },
+
+  renderConversationPicker: function() {
+    const select = document.getElementById('conversation-select');
+    const removeButton = document.getElementById('btn-delete-conversation');
+    if (!select) return;
+    select.replaceChildren(new Option('No saved conversation selected', ''));
+    this.state.conversations.forEach((conversation) => {
+      const option = new Option(`${conversation.sourceName || 'Conversation'} · ${conversation.messages.length} messages`, conversation.id);
+      select.add(option);
+    });
+    select.value = this.state.activeConversationId || '';
+    if (removeButton) removeButton.disabled = !select.value;
+  },
+
+  renderSecurityStatus: function() {
+    const authStatus = document.getElementById('security-auth-status');
+    const mfaStatus = document.getElementById('security-mfa-status');
+    if (!authStatus || !mfaStatus) return;
+    if (!this.currentUser) {
+      authStatus.textContent = 'You are signed out. Sign in to view Firebase-reported authentication methods.';
+      mfaStatus.textContent = 'No MFA status is available while signed out. Aura does not provide MFA enrollment controls.';
+      return;
+    }
+    const providers = [...new Set((this.currentUser.providerData || []).map((item) => {
+      if (item.providerId === 'password') return 'email/password';
+      if (item.providerId === 'google.com') return 'Google';
+      return item.providerId;
+    }))];
+    authStatus.textContent = `Firebase account methods: ${providers.length ? providers.join(', ') : 'not reported'}; email ${this.currentUser.emailVerified ? 'verified' : 'not verified'}.`;
+    const factors = this.currentUser.multiFactor && this.currentUser.multiFactor.enrolledFactors;
+    mfaStatus.textContent = factors && factors.length
+      ? `${factors.length} second factor(s) are reported by Firebase. Aura does not currently manage factor enrollment or recovery.`
+      : 'No enrolled second factor is reported by Firebase. Aura does not implement MFA enrollment. Firebase MFA requires Authentication with Identity Platform and verified email; the project configuration has not been inspected.';
+  },
+
+  startNewConversation: function(sourceName = 'Pasted transcript', sourceType = 'text') {
+    this.pendingImport = { sourceName, sourceType };
+    this.draftHasChanges = false;
+    this.state.activeConversationId = null;
+    this.state.simMessages = [];
+    this.state.simConversationId = null;
+    this.state.simAnalysisVersion = null;
+    const select = document.getElementById('conversation-select');
+    const textarea = document.getElementById('pasted-chat-text');
+    if (select) select.value = '';
+    if (textarea) textarea.value = '';
+    const deleteButton = document.getElementById('btn-delete-conversation');
+    if (deleteButton) deleteButton.disabled = true;
+    this.setUploadStatus('New transcript draft. Existing saved conversations remain unchanged until you analyze and save this one.');
+    this.renderCurrentView();
+  },
+
+  selectConversation: function(id) {
+    const conversation = this.state.conversations.find((item) => item.id === id);
+    if (!conversation) return;
+    this.state.activeConversationId = conversation.id;
+    if (this.state.simConversationId !== conversation.id) {
+      this.state.simMessages = [];
+      this.state.simConversationId = null;
+      this.state.simAnalysisVersion = null;
+    }
+    this.pendingImport = null;
+    this.draftHasChanges = false;
+    document.getElementById('pasted-chat-text').value = auraConversationService.toEditableText(conversation);
+    this.setUploadStatus(`Loaded “${conversation.sourceName}” for review. Edit it if needed, then run analysis to save a new version.`);
+    this.renderConversationPicker();
+    this.saveState();
+    this.renderCurrentView();
+  },
+
+  deleteSelectedConversation: function() {
+    const conversation = this.getActiveConversation();
+    if (!conversation || !confirm(`Delete “${conversation.sourceName}” and its local analysis and practice history from this browser?`)) return;
+    this.state.conversations = this.state.conversations.filter((item) => item.id !== conversation.id);
+    this.state.analyses = this.state.analyses.filter((item) => item.conversationId !== conversation.id);
+    if (this.state.simConversationId === conversation.id) {
+      this.state.simMessages = [];
+      this.state.simConversationId = null;
+      this.state.simAnalysisVersion = null;
+    }
+    this.state.activeConversationId = null;
+    this.startNewConversation();
+    this.renderConversationPicker();
+    this.saveState();
+    this.renderCurrentView();
+  },
+
+  importTranscriptFile: async function(file) {
+    if (!file) return;
+    const extension = file.name.toLowerCase().split('.').pop();
+    const acceptedTypes = extension === 'json' ? ['application/json', 'text/json'] : ['text/plain'];
+    if (!['txt', 'json'].includes(extension)) {
+      this.setUploadStatus('Unsupported file type. Choose a .txt or .json transcript; images and PDFs are not supported.', true);
+      return;
+    }
+    if (file.type && !acceptedTypes.includes(file.type.toLowerCase())) {
+      this.setUploadStatus('The file extension and reported file type do not match. Save it as a plain text or JSON transcript and try again.', true);
+      return;
+    }
+    if (!file.size || file.size > auraConversationService.MAX_BYTES) {
+      this.setUploadStatus(file.size ? 'This file exceeds Aura’s 1 MiB limit.' : 'This file is empty.', true);
+      return;
+    }
+    try {
+      const content = await file.text();
+      const parsed = auraConversationService.normalizeTranscript(content, { format: extension === 'json' ? 'json' : 'text' });
+      document.getElementById('pasted-chat-text').value = auraConversationService.toEditableText(parsed);
+      this.pendingImport = { sourceName: file.name, sourceType: extension };
+      this.state.activeConversationId = null;
+      this.state.simMessages = [];
+      this.state.simConversationId = null;
+      this.state.simAnalysisVersion = null;
+      this.draftHasChanges = false;
+      this.renderConversationPicker();
+      this.setUploadStatus(`Read ${parsed.messages.length} messages locally from “${file.name}”. Review or edit the preview, then run analysis to save it.${parsed.extractionWarnings ? ` ${parsed.extractionWarnings} line(s) could not be assigned to a speaker and were omitted.` : ''}`);
+    } catch (error) {
+      this.setUploadStatus(error && error.message ? error.message : 'The file could not be read as a supported transcript.', true);
+    }
+  },
+
+  analyzeDraft: async function() {
+    if (!this.currentUser) { this.switchView('auth'); return; }
+    if (this.analysisBusy) return;
+    const button = document.getElementById('btn-analyze-paste');
+    const text = document.getElementById('pasted-chat-text').value;
+    this.analysisBusy = true;
+    if (button) { button.disabled = true; button.textContent = 'Analyzing locally…'; }
+    try {
+      const existing = !this.pendingImport && this.getActiveConversation();
+      const sameId = existing ? existing.id : null;
+      const sameCreatedAt = existing ? existing.createdAt : null;
+      const conversation = auraConversationService.normalizeTranscript(text, {
+        id: sameId || undefined,
+        version: existing ? existing.version + 1 : 1,
+        createdAt: sameCreatedAt || undefined,
+        sourceName: this.pendingImport?.sourceName || existing?.sourceName || 'Pasted transcript',
+        sourceType: this.pendingImport?.sourceType || existing?.sourceType || 'text'
+      });
+      if (!existing && this.state.conversations.length >= 10) {
+        throw new Error('Aura stores up to 10 conversations in this browser. Delete one explicitly before adding another.');
+      }
+      const analysis = await auraConversationService.analyzeConversation(conversation, auraConversationService.localHeuristicProvider);
+      const index = this.state.conversations.findIndex((item) => item.id === conversation.id);
+      if (index >= 0) this.state.conversations[index] = conversation;
+      else this.state.conversations.unshift(conversation);
+      this.state.analyses = this.state.analyses.filter((item) => item.conversationId !== conversation.id);
+      this.state.analyses.push(analysis);
+      this.state.activeConversationId = conversation.id;
+      this.state.simMessages = [];
+      this.state.simConversationId = null;
+      this.state.simAnalysisVersion = null;
+      this.pendingImport = null;
+      this.draftHasChanges = false;
+      this.renderConversationPicker();
+      const persisted = this.saveState();
+      this.setUploadStatus(persisted
+        ? `Saved and analyzed ${conversation.messages.length} messages locally. No transcript was sent to an analysis provider.${conversation.extractionWarnings ? ` ${conversation.extractionWarnings} unassigned line(s) were omitted.` : ''}`
+        : 'Analysis completed in memory but could not be saved to browser storage. Export the data before refreshing or close this tab.', !persisted);
+      if (auraEngines.detectCrisis(text)) {
+        document.getElementById('crisis-alert-banner').classList.remove('hidden');
+      }
+      this.switchView('analysis');
+    } catch (error) {
+      this.setUploadStatus(error && error.message ? error.message : 'Aura could not analyze this transcript.', true);
+    } finally {
+      this.analysisBusy = false;
+      if (button) { button.disabled = false; button.textContent = 'Run Analysis 🚀'; }
+    }
+  },
+
+  renderSimulator: function() {
+    const conversation = this.getActiveConversation();
+    const analysis = this.getActiveAnalysis();
+    const ready = Boolean(conversation && analysis && !this.draftHasChanges);
+    const input = document.getElementById('sim-input-text');
+    const send = document.getElementById('btn-sim-send');
+    const note = document.getElementById('sim-context-note');
+    document.getElementById('sim-objective').value = this.state.simulationObjective || 'clarification';
+    input.disabled = !ready;
+    send.disabled = !ready;
+    if (!ready) {
+      this.state.simMessages = [];
+      note.textContent = this.draftHasChanges
+        ? 'The selected transcript has edits that have not been analyzed. Re-run analysis before practicing.'
+        : 'Select and analyze a conversation first. Practice content is fictional.';
+      this.state.simConversationId = null;
+      this.state.simAnalysisVersion = null;
+    } else {
+      note.textContent = `Practice context: ${conversation.sourceName} · recent messages and cited findings from this conversation. Every generated reply is fictional, not a prediction.`;
+      if (this.state.simConversationId !== conversation.id || this.state.simAnalysisVersion !== analysis.analysisVersion) {
+        this.state.simMessages = this.buildSimulationContext(conversation, analysis);
+        this.state.simConversationId = conversation.id;
+        this.state.simAnalysisVersion = analysis.analysisVersion;
+        this.saveState();
+      }
+      const recommendation = analysis.recommendations[0];
+      document.getElementById('sim-advice-text').textContent = recommendation
+        ? `${recommendation.text}${recommendation.basedOnFindingIds.length ? ` Evidence: ${recommendation.basedOnFindingIds.join(', ')}.` : ''}`
+        : 'No recommendation is available for this analysis.';
+    }
+    auraUI.renderSimulator(this.state, conversation);
+  },
+
+  buildSimulationContext: function(conversation, analysis) {
+    const recentIds = conversation.messages.slice(-6).map((message) => message.id);
+    const citedIds = analysis.findings.flatMap((finding) => finding.evidenceMessageIds).slice(0, 4);
+    const selected = new Set([...citedIds, ...recentIds]);
+    return conversation.messages
+      .filter((message) => selected.has(message.id))
+      .map((message) => ({
+        role: 'context',
+        messageId: message.id,
+        conversationId: conversation.id,
+        analysisVersion: analysis.analysisVersion
+      }));
   },
 
   loadState: function(uid) {
     this.state = createDefaultState();
     const key = this.storageKey(uid);
-    const raw = key && localStorage.getItem(key);
+    let raw = null;
+    try {
+      raw = key && localStorage.getItem(key);
+    } catch (_) {
+      this.storageUnavailable = true;
+      this.setUploadStatus('Browser storage is unavailable. Aura can work with the current transcript temporarily, but cannot save it here.', true);
+    }
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
         this.state = { ...this.state, ...parsed };
+        delete this.state.activeAnalysis;
+        delete this.state.audioInterval;
+        delete this.state.audioPlaying;
+        delete this.state.audioProgress;
+        this.state.conversations = Array.isArray(parsed.conversations) ? parsed.conversations.filter((item) => item && typeof item.id === 'string' && Array.isArray(item.messages)) : [];
+        this.state.analyses = Array.isArray(parsed.analyses) ? parsed.analyses.filter((item) => item && typeof item.conversationId === 'string' && Array.isArray(item.findings) && Array.isArray(item.recommendations)) : [];
+        this.state.journalEntries = Array.isArray(parsed.journalEntries) ? parsed.journalEntries.filter((item) => item && typeof item.id === 'string') : [];
+        this.state.completedLessons = Array.isArray(parsed.completedLessons) ? parsed.completedLessons.filter((item) => typeof item === 'string') : [];
+        this.state.simMessages = Array.isArray(parsed.simMessages) ? parsed.simMessages.filter((item) => item && typeof item === 'object') : [];
+        if (!this.state.conversations.some((item) => item.id === this.state.activeConversationId)) {
+          this.state.activeConversationId = this.state.conversations[this.state.conversations.length - 1]?.id || null;
+        }
+        // Do not restore mock analysis or an unrelated legacy simulator thread.
+        if (!this.state.simConversationId || this.state.simConversationId !== this.state.activeConversationId) {
+          this.state.simMessages = [];
+          this.state.simConversationId = null;
+          this.state.simAnalysisVersion = null;
+        }
       } catch (e) {
-        console.error("Failed to parse this user's Local Data Vault. Resetting...", e);
+        console.error("Failed to parse local Aura state.", { name: e && e.name });
       }
     }
-    if (!this.state.activeAnalysis) {
-      this.state.activeAnalysis = auraEngines.getDefaultAnalysis();
-    }
+    this.renderConversationPicker();
   },
 
   handleAuthStateChanged: function(user) {
+    const previousUid = this.currentUser && this.currentUser.uid;
+    const nextUid = user && user.uid;
+    if (previousUid && previousUid !== nextUid) this.clearPrivateSessionUI();
     this.currentUser = user || null;
     if (!user) {
       this.state = createDefaultState();
       document.getElementById('sidebar').classList.add('hidden');
+      this.renderSecurityStatus();
+      this.renderConversationPicker();
+      this.setUploadStatus('');
       this.switchView('landing');
       return;
     }
@@ -103,7 +385,36 @@ const app = {
       document.getElementById('sidebar').classList.remove('hidden');
     }
     this.switchView(this.state.onboarded ? 'dashboard' : 'onboarding');
-    this.logAudit(`Firebase user authenticated: ${user.uid}`);
+    this.renderSecurityStatus();
+    this.logAudit('Firebase authentication state updated.');
+  },
+
+  clearPrivateSessionUI: function() {
+    ['pasted-chat-text', 'boundary-draft-input', 'boundary-translation-output', 'journal-entry-text', 'sim-input-text', 'auth-email', 'auth-password', 'onboard-name'].forEach((id) => {
+      const field = document.getElementById(id);
+      if (field) { field.value = ''; field.textContent = ''; }
+    });
+    const crisis = document.getElementById('crisis-alert-banner');
+    if (crisis) crisis.classList.add('hidden');
+    const report = document.getElementById('print-report');
+    if (report) report.replaceChildren();
+    ['analysis-findings', 'analysis-recommendations', 'analysis-evidence', 'sim-chat-box', 'dashboard-patterns-list', 'dashboard-actions-list', 'journal-entries-list'].forEach((id) => {
+      const container = document.getElementById(id);
+      if (container) container.replaceChildren();
+    });
+    const analysisView = document.getElementById('analysis-current');
+    if (analysisView) analysisView.classList.add('hidden');
+    ['analysis-summary', 'analysis-limitations', 'analysis-speakers', 'analysis-source-name', 'analysis-method-note'].forEach((id) => {
+      const field = document.getElementById(id);
+      if (field) field.textContent = '';
+    });
+    const logs = document.getElementById('settings-audit-logs');
+    if (logs) logs.textContent = 'No recent security events.';
+    document.querySelectorAll('.wizard-option-card.selected').forEach((card) => card.classList.remove('selected'));
+    this.pendingImport = null;
+    this.draftHasChanges = false;
+    this.storageUnavailable = false;
+    this.setUploadStatus('');
   },
 
   showAuthMessage: function(message, isError) {
@@ -317,7 +628,8 @@ const app = {
   // Trigger UI updates based on current view loaded
   renderCurrentView: function() {
     const view = this.state.currentView;
-    const analysis = this.state.activeAnalysis || auraEngines.getDefaultAnalysis();
+    const conversation = this.getActiveConversation();
+    const analysis = this.draftHasChanges ? null : this.getActiveAnalysis();
     
     // Update profile displays
     const letters = (this.state.username || "US").substring(0,2).toUpperCase();
@@ -325,15 +637,17 @@ const app = {
     document.getElementById('profile-display-name').textContent = this.state.username || "User";
     
     if (view === 'dashboard') {
-      auraUI.renderDashboard(this.state, analysis);
+      auraUI.renderDashboard(this.state, analysis, conversation);
     } else if (view === 'analysis') {
-      auraUI.renderAnalysis(analysis);
+      auraUI.renderAnalysis(analysis, conversation);
     } else if (view === 'reality-check') {
-      auraUI.renderRealityCheck(analysis, this.state.straightAnswerMode);
+      auraUI.renderRealityCheck(analysis, this.state.straightAnswerMode, conversation);
     } else if (view === 'simulator') {
-      auraUI.renderSimulator(this.state);
+      this.renderSimulator();
     } else if (view === 'growth') {
       auraUI.renderGrowthHub(this.state);
+    } else if (view === 'settings') {
+      this.renderSecurityStatus();
     }
   },
 
@@ -445,9 +759,8 @@ const app = {
         this.classList.add('selected');
         
         // Save values during selection
-        const val = this.getAttribute('data-value');
         const step = this.closest('.wizard-step-content').id;
-        self.logAudit(`Selected onboarding parameter: ${step} = ${val}`);
+        self.logAudit(`Updated onboarding choice in ${step}.`);
       });
     });
 
@@ -599,51 +912,71 @@ const app = {
       self.runAuthAction(button, 'Signing out…', (firebase) => firebase.signOut(firebase.auth));
     });
 
-    // Sample conversation triggers
-    document.getElementById('btn-sample-anxious').addEventListener('click', () => {
-      document.getElementById('pasted-chat-text').value = auraData.samples.anxious;
-      self.logAudit("Pasted Sample 1 (Anxious vs Avoidant).");
+    // Conversation library, upload, review, and local analysis workflow.
+    document.getElementById('btn-new-conversation').addEventListener('click', () => self.startNewConversation());
+    document.getElementById('btn-delete-conversation').addEventListener('click', () => self.deleteSelectedConversation());
+    document.getElementById('conversation-select').addEventListener('change', (event) => {
+      if (event.target.value) self.selectConversation(event.target.value);
+      else self.startNewConversation();
     });
-    document.getElementById('btn-sample-passive').addEventListener('click', () => {
-      document.getElementById('pasted-chat-text').value = auraData.samples.passive;
-      self.logAudit("Pasted Sample 2 (Passive-Aggressive).");
-    });
-    document.getElementById('btn-sample-secure').addEventListener('click', () => {
-      document.getElementById('pasted-chat-text').value = auraData.samples.secure;
-      self.logAudit("Pasted Sample 3 (Healthy Boundary).");
-    });
-
-    // Analyze pasted chat log
-    document.getElementById('btn-analyze-paste').addEventListener('click', () => {
-      const text = document.getElementById('pasted-chat-text').value.trim();
-      if (!text) {
-        alert("Please paste a conversation transcript to analyze.");
-        return;
+    document.getElementById('pasted-chat-text').addEventListener('input', () => {
+      const selected = self.getActiveConversation();
+      if (selected) {
+        self.draftHasChanges = true;
+        self.setUploadStatus('This saved transcript has edits that are not yet analyzed. Re-run analysis to update its findings.');
       }
-
-      // Run crisis check
-      if (auraEngines.detectCrisis(text)) {
-        document.getElementById('crisis-alert-banner').classList.remove('hidden');
-        self.logAudit("CRITICAL: Distress keywords triggered safety system.");
-      }
-
-      // Analyze
-      const analysis = auraEngines.analyzeChat(text);
-      self.state.activeAnalysis = analysis;
-      self.saveState();
-
-      self.switchView('analysis');
     });
+    document.getElementById('btn-analyze-paste').addEventListener('click', () => self.analyzeDraft());
+
+    const fileInput = document.getElementById('chat-file-input');
+    const dropzone = document.getElementById('chat-dropzone');
+    fileInput.addEventListener('change', async () => {
+      await self.importTranscriptFile(fileInput.files && fileInput.files[0]);
+      fileInput.value = '';
+    });
+    dropzone.addEventListener('click', (event) => {
+      if (!event.target.closest('label') && event.target !== fileInput) fileInput.click();
+    });
+    dropzone.addEventListener('keydown', (event) => {
+      if ((event.key === 'Enter' || event.key === ' ') && event.target === dropzone) {
+        event.preventDefault();
+        fileInput.click();
+      }
+    });
+    ['dragenter', 'dragover'].forEach((type) => dropzone.addEventListener(type, (event) => {
+      event.preventDefault();
+      dropzone.classList.add('dragover');
+    }));
+    ['dragleave', 'drop'].forEach((type) => dropzone.addEventListener(type, (event) => {
+      event.preventDefault();
+      dropzone.classList.remove('dragover');
+    }));
+    dropzone.addEventListener('drop', async (event) => {
+      await self.importTranscriptFile(event.dataTransfer && event.dataTransfer.files[0]);
+    });
+
+    const loadSample = (sample, label) => {
+      self.startNewConversation(label, 'sample');
+      document.getElementById('pasted-chat-text').value = sample;
+      self.setUploadStatus(`${label} loaded as a new draft. Review it before saving and analyzing.`);
+      self.logAudit('Sample conversation loaded for review.');
+    };
+    document.getElementById('btn-sample-anxious').addEventListener('click', () => loadSample(auraData.samples.anxious, 'Sample conversation 1'));
+    document.getElementById('btn-sample-passive').addEventListener('click', () => loadSample(auraData.samples.passive, 'Sample conversation 2'));
+    document.getElementById('btn-sample-secure').addEventListener('click', () => loadSample(auraData.samples.secure, 'Sample conversation 3'));
 
     // Close crisis banner
     document.getElementById('btn-close-crisis-banner').addEventListener('click', () => {
       document.getElementById('crisis-alert-banner').classList.add('hidden');
     });
 
-    // Export PDF mockup
+    // Open the browser's native print flow. The user must choose Save as PDF.
     document.getElementById('btn-export-pdf').addEventListener('click', () => {
-      alert("A PDF report containing trust indices, emotional balances, and resolution roadmaps has been downloaded (Simulated).");
-      self.logAudit("Exported PDF analysis report.");
+      if (!self.getActiveAnalysis() || self.draftHasChanges) return;
+      auraUI.renderPrintReport(self.getActiveAnalysis(), self.getActiveConversation(), self.state.simMessages);
+      document.getElementById('analysis-method-note').textContent = 'Print dialog opened. Choose “Save as PDF” to create the report; Aura does not claim a file was saved until you complete that browser step.';
+      window.print();
+      self.logAudit('Print / PDF report requested.');
     });
 
     // Reality Check Switches
@@ -666,8 +999,7 @@ const app = {
       
       // Re-render reality content if visible
       if (self.state.currentView === 'reality-check') {
-        const analysis = self.state.activeAnalysis || auraEngines.getDefaultAnalysis();
-        auraUI.renderRealityCheck(analysis, checked);
+        auraUI.renderRealityCheck(self.draftHasChanges ? null : self.getActiveAnalysis(), checked, self.getActiveConversation());
       }
       self.logAudit(`Toggled Straight-Answer Mode to: ${checked}`);
     };
@@ -680,7 +1012,7 @@ const app = {
       const input = document.getElementById('boundary-draft-input').value.trim();
       if (!input) return;
 
-      const output = auraEngines.translateBoundary(input);
+      const output = auraEngines.translateBoundary(input, self.getActiveAnalysis());
       document.getElementById('boundary-translation-output').textContent = output;
       self.logAudit("Boundary Translation Engine computed suggestion.");
     });
@@ -720,9 +1052,6 @@ const app = {
     document.getElementById('btn-lesson-prev').addEventListener('click', () => self.navigateLesson(-1));
     document.getElementById('btn-lesson-complete').addEventListener('click', () => self.completeLesson());
 
-    // Audio meditator player mockup
-    document.getElementById('btn-audio-toggle').addEventListener('click', () => self.toggleMockAudio());
-
     // Settings actions
     document.getElementById('btn-export-settings-data').addEventListener('click', () => {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(self.state, null, 2));
@@ -736,10 +1065,13 @@ const app = {
     document.getElementById('btn-clear-settings-data').addEventListener('click', () => {
       if (confirm("Are you sure you want to delete all local files and metrics? This cannot be undone.")) {
         const key = self.storageKey();
-        if (key) localStorage.removeItem(key);
+        try { if (key) localStorage.removeItem(key); }
+        catch (_) { self.setUploadStatus('Aura could not clear browser storage. Remove this site’s data in your browser settings.', true); }
         self.state = createDefaultState();
+        self.renderConversationPicker();
+        self.renderSecurityStatus();
         self.switchView(self.currentUser ? 'onboarding' : 'landing');
-        alert("Your local Aura data for this account has been cleared.");
+        self.logAudit("Local data clear requested.");
       }
     });
   },
@@ -775,12 +1107,9 @@ const app = {
     document.getElementById('course-lesson-title').textContent = lesson.title;
     document.getElementById('course-lesson-badge').textContent = course.title;
     
-    // Convert newlines to breaks for mock body
-    const bodyHTML = lesson.body.replace(/\n/g, '<br>');
-    document.getElementById('course-lesson-body').innerHTML = bodyHTML;
-
-    // Reset Audio Mock
-    this.stopMockAudio();
+    const lessonBody = document.getElementById('course-lesson-body');
+    lessonBody.textContent = lesson.body;
+    lessonBody.style.whiteSpace = 'pre-line';
 
     // Toggle complete button status
     const compBtn = document.getElementById('btn-lesson-complete');
@@ -822,149 +1151,76 @@ const app = {
     auraUI.renderGrowthHub(this.state);
   },
 
-  // Mock Audio guide functions
-  toggleMockAudio: function() {
-    const btn = document.getElementById('btn-audio-toggle');
-    const trackProgress = document.querySelector('.audio-track-progress');
-    const self = this;
-
-    if (this.state.audioPlaying) {
-      this.stopMockAudio();
-    } else {
-      this.state.audioPlaying = true;
-      btn.textContent = "⏸ Pause Guide";
-      self.state.audioInterval = setInterval(() => {
-        self.state.audioProgress += 1.5;
-        if (self.state.audioProgress >= 100) {
-          self.state.audioProgress = 100;
-          self.stopMockAudio();
-        }
-        trackProgress.style.width = self.state.audioProgress + "%";
-      }, 300);
-      self.logAudit("Audio guide meditation playback started.");
-    }
-  },
-
-  stopMockAudio: function() {
-    if (this.state.audioInterval) {
-      clearInterval(this.state.audioInterval);
-      this.state.audioInterval = null;
-    }
-    this.state.audioPlaying = false;
-    this.state.audioProgress = 0;
-    
-    const btn = document.getElementById('btn-audio-toggle');
-    const trackProgress = document.querySelector('.audio-track-progress');
-    if (btn) btn.textContent = "▶ Play Audio Guide";
-    if (trackProgress) trackProgress.style.width = "0%";
-  },
-
   // Setup Chat Simulator initial state
   setupSimulator: function() {
     const self = this;
-
-    if (this.state.simMessages.length === 0) {
-      this.resetSimulator();
-    }
-
     document.getElementById('btn-sim-send').addEventListener('click', () => self.sendSimMessage());
-    document.getElementById('sim-input-text').addEventListener('keypress', (e) => {
+    document.getElementById('sim-input-text').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') self.sendSimMessage();
     });
     document.getElementById('btn-reset-simulator').addEventListener('click', () => self.resetSimulator());
+    document.getElementById('sim-objective').addEventListener('change', (event) => {
+      self.state.simulationObjective = event.target.value;
+      self.saveState();
+    });
   },
 
   resetSimulator: function() {
-    this.state.simMessages = [
-      { role: "partner", text: "Why haven't you replied all day? It takes 5 seconds to send a text." }
-    ];
+    const conversation = this.getActiveConversation();
+    const analysis = this.getActiveAnalysis();
+    if (!conversation || !analysis || this.draftHasChanges) {
+      this.state.simMessages = [];
+      this.state.simConversationId = null;
+      this.state.simAnalysisVersion = null;
+      this.renderSimulator();
+      return;
+    }
+    this.state.simMessages = this.buildSimulationContext(conversation, analysis);
+    this.state.simConversationId = conversation.id;
+    this.state.simAnalysisVersion = analysis.analysisVersion;
     this.saveState();
-    
-    // Clear display parameters
-    document.getElementById('predict-success-val').textContent = "--%";
-    document.getElementById('predict-defense-val').textContent = "--%";
-    document.getElementById('predict-withdrawal-val').textContent = "--%";
-    
-    const alertBox = document.getElementById('sim-prediction-alert');
-    alertBox.textContent = "Start typing messages to begin prediction scoring.";
-    alertBox.className = "insight-item";
-    
-    document.getElementById('sim-advice-text').textContent = "Try using an 'I' statement instead of a 'You' statement to lower your partner's predicted defensiveness.";
-
-    auraUI.renderSimulator(this.state);
-    this.logAudit("Simulator conversation thread reset.");
+    this.renderSimulator();
+    this.logAudit('Practice session reset for selected conversation.');
   },
 
   // Send message in simulator
   sendSimMessage: function() {
+    const conversation = this.getActiveConversation();
+    const analysis = this.getActiveAnalysis();
+    if (!conversation || !analysis || this.draftHasChanges || this.state.simConversationId !== conversation.id || this.state.simAnalysisVersion !== analysis.analysisVersion) return;
     const input = document.getElementById('sim-input-text');
     const msgText = input.value.trim();
     if (!msgText) return;
-
-    // 1. Add User bubble
-    this.state.simMessages.push({ role: "user", text: msgText });
-    input.value = "";
-    auraUI.renderSimulator(this.state);
-
-    // 2. Perform outcome prediction
-    const prediction = auraEngines.predictOutcome(msgText);
-    
-    // Update metric numbers
-    document.getElementById('predict-success-val').textContent = `${prediction.positive}%`;
-    document.getElementById('predict-defense-val').textContent = `${prediction.defensive}%`;
-    document.getElementById('predict-withdrawal-val').textContent = `${prediction.withdrawal}%`;
-
-    // Highlight alerts
-    const alertBox = document.getElementById('sim-prediction-alert');
-    alertBox.textContent = prediction.alertText;
-    if (prediction.positive > 60) {
-      alertBox.className = "insight-item success";
-    } else if (prediction.defensive > 60) {
-      alertBox.className = "insight-item danger";
-    } else {
-      alertBox.className = "insight-item warning";
+    if (msgText.length > 2000) {
+      document.getElementById('sim-prediction-alert').textContent = 'Practice drafts are limited to 2,000 characters.';
+      return;
+    }
+    if (this.state.simMessages.length >= 100) {
+      document.getElementById('sim-prediction-alert').textContent = 'This practice session reached its 100-message limit. Reset it to start another session.';
+      return;
     }
 
-    // Set advice block
-    document.getElementById('sim-advice-text').textContent = prediction.advice;
-
-    this.logAudit(`Simulator analyzed sentence: "${msgText}"`);
-
-    // 3. Simulate Partner response with small typing delay
-    const chatArea = document.getElementById('sim-chat-box');
-    const typingBubble = document.createElement('div');
-    typingBubble.className = "sim-message partner";
-    typingBubble.textContent = "Typing...";
-    chatArea.appendChild(typingBubble);
-    chatArea.scrollTop = chatArea.scrollHeight;
-
-    setTimeout(() => {
-      typingBubble.remove();
-      
-      let replyText = "";
-      if (prediction.positive > 60) {
-        replyText = "Thanks for telling me how you feel. I understand you were busy. Let's schedule dinner tonight.";
-      } else if (prediction.defensive > 60) {
-        replyText = "Oh, so now it's MY fault? You always turn things around on me when you make a mistake!";
-      } else {
-        replyText = "Whatever. I don't want to get into this right now. Talk later.";
-      }
-
-      this.state.simMessages.push({ role: "partner", text: replyText });
-      
-      // Offer secondary guidance advice bubble in log
-      let coachFeedback = "";
-      if (prediction.positive > 60) {
-        coachFeedback = "💡 Coach Note: Nice job! Your emotional clarity de-escalated the friction and steered the topic toward collaboration.";
-      } else {
-        coachFeedback = `💡 Coach Note: This reply triggered high resistance. Notice how using the draft phrasing caused them to ${prediction.defensive > 60 ? "act defensive" : "shut down"}. Try replaying this step using the translated boundary builder suggestion.`;
-      }
-      this.state.simMessages.push({ role: "ai-feedback", text: coachFeedback });
-
-      this.saveState();
-      auraUI.renderSimulator(this.state);
-      this.logAudit(`Simulator generated partner response: "${replyText}"`);
-    }, 1500);
+    const metadata = { conversationId: conversation.id, analysisVersion: analysis.analysisVersion };
+    this.state.simMessages.push({ role: 'user', text: msgText, ...metadata });
+    input.value = "";
+    const review = auraConversationService.reviewDraft(msgText);
+    const alertBox = document.getElementById('sim-prediction-alert');
+    alertBox.textContent = review.note;
+    alertBox.className = 'insight-item';
+    const objective = document.getElementById('sim-objective').value;
+    this.state.simulationObjective = objective;
+    this.state.simMessages.push({
+      role: 'simulation',
+      text: auraConversationService.createPracticeReply(objective, conversation.messages[conversation.messages.length - 1]),
+      ...metadata
+    });
+    const recommendation = analysis.recommendations.find((item) => !item.basedOnFindingIds.length || item.basedOnFindingIds.some((id) => analysis.findings.some((finding) => finding.id === id)));
+    if (recommendation) {
+      this.state.simMessages.push({ role: 'feedback', text: `Possible next step: ${recommendation.text}`, ...metadata });
+    }
+    this.saveState();
+    auraUI.renderSimulator(this.state, conversation);
+    this.logAudit('Practice draft reviewed locally.');
   },
 
   startSakuraFalling: function() {

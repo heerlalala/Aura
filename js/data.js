@@ -102,40 +102,4 @@ Taylor: Me too. Thanks for telling me how you feel without blaming me.`
     "List three qualities you bring to a relationship that you are proud of."
   ],
 
-  // Mock Advice Responses
-  adviceTemplates: {
-    anxious: {
-      actions: [
-        "Take a 15-minute screen break before sending follow-up messages.",
-        "Replace accusatory texts with a simple check-in: 'Hope your day is going well! Let's chat when you are free.'",
-        "Practice self-regulation: journal your anxious thoughts rather than texting them."
-      ],
-      patterns: [
-        "Pursuit-Withdrawal Loop: High frequency texting when partner is unresponsive.",
-        "Reassurance Seeking: Needing immediate confirmation of relationship safety."
-      ]
-    },
-    passive: {
-      actions: [
-        "State your needs directly: 'I'm tired and could use some help cleaning the kitchen.'",
-        "Avoid sarcasm; it acts as an emotional divider.",
-        "Schedule weekly chore reviews to prevent resentment buildup."
-      ],
-      patterns: [
-        "Passive-Aggression: Using sarcasm to express disappointment instead of speaking directly.",
-        "Resentment accumulation: Keeping score of efforts rather than communicating."
-      ]
-    },
-    secure: {
-      actions: [
-        "Acknowledge and validate your partner's efforts during planning.",
-        "Keep doing weekly check-ins; they are highly effective.",
-        "Maintain clarity in stating feelings without assigning blame."
-      ],
-      patterns: [
-        "Collaborative Problem Solving: Focusing on scheduling options together.",
-        "Assertive boundary setting with high safety indicators."
-      ]
-    }
-  }
 };

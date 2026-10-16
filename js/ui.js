@@ -1,296 +1,223 @@
-// Aura UI Renderer Module
-
+// Aura UI renderer. User-provided transcript and journal text is inserted with
+// textContent; report exports are built from the selected UID-scoped records.
 const auraUI = {
-
-  // Escape values before placing user-controlled content in an HTML template.
   escapeHTML: function(value) {
     return String(value ?? '').replace(/[&<>"']/g, (character) => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;'
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     })[character]);
   },
-  
-  // Update circular gauge score indicator
-  updateScoreDial: function(elementId, value) {
-    const ring = document.getElementById(elementId);
-    if (!ring) return;
-    
-    // Radius = 64, Circumference = 2 * PI * r = 402
-    const maxOffset = 402;
-    const offset = maxOffset - (value / 100) * maxOffset;
-    ring.style.strokeDashoffset = offset;
+
+  element: function(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
   },
 
-  // Render Dashboard main widgets
-  renderDashboard: function(state, analysis) {
-    // Set username
-    document.getElementById('dash-username').textContent = state.username || "Alex";
-    
-    // Update Score Dial
-    document.getElementById('score-text').textContent = analysis.harmonyScore;
-    this.updateScoreDial('score-ring', analysis.harmonyScore);
-
-    // Effort status label
-    const effortStatus = document.getElementById('dash-effort-status');
-    effortStatus.textContent = `${analysis.userEffortPercent}% Effort`;
-    if (analysis.userEffortPercent >= 45 && analysis.userEffortPercent <= 55) {
-      effortStatus.className = "badge badge-success";
-      effortStatus.textContent = "Balanced (" + analysis.userEffortPercent + "%)";
-    } else {
-      effortStatus.className = "badge badge-warning";
-      effortStatus.textContent = "Imbalanced (" + analysis.userEffortPercent + "%)";
+  renderDashboard: function(state, analysis, conversation) {
+    document.getElementById('dash-username').textContent = state.username || 'User';
+    document.getElementById('score-text').textContent = analysis ? String(analysis.messageCount) : '—';
+    document.querySelector('#view-dashboard .score-label').textContent = 'Messages';
+    document.querySelector('#view-dashboard .score-card h4').textContent = 'Selected transcript';
+    document.querySelector('#view-dashboard .score-card p').textContent = analysis
+      ? 'Message count from the selected transcript. It is not a relationship-quality score.'
+      : 'Analyze a transcript to see source-grounded observations here.';
+    const effort = document.getElementById('dash-effort-status');
+    effort.className = 'badge badge-primary';
+    effort.textContent = analysis ? `${analysis.participants.length} speaker(s)` : 'No transcript';
+    const dynamicCard = document.querySelector('#view-dashboard .grid-3 .glass-panel:nth-child(2)');
+    if (dynamicCard) {
+      dynamicCard.querySelectorAll('span').forEach((span, index) => {
+        if (index === 0) span.textContent = 'Source';
+        if (index === 1) span.textContent = conversation ? conversation.sourceName : '—';
+        if (index === 2) span.textContent = 'Topics mentioned';
+        if (index === 3) span.textContent = analysis && analysis.topicCues.length ? analysis.topicCues.map((item) => item.label).join(', ') : 'No topic marker';
+        if (index === 4) span.textContent = 'Analysis method';
+        if (index === 5) span.textContent = analysis ? 'Local text heuristics' : 'Not analyzed';
+      });
     }
-
-    // Render active patterns list
     const patternBox = document.getElementById('dashboard-patterns-list');
-    patternBox.innerHTML = "";
-    
-    // Base active patterns from template data or calculation
-    const patternSource = (analysis.harmonyScore < 75) 
-      ? auraData.adviceTemplates.anxious.patterns 
-      : auraData.adviceTemplates.secure.patterns;
-
-    patternSource.forEach(pattern => {
-      const el = document.createElement('div');
-      el.className = "insight-item";
-      if (analysis.harmonyScore < 75) el.classList.add("danger");
-      el.innerHTML = `<strong>${pattern.split(':')[0]}:</strong><p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem;">${pattern.split(':')[1] || "Active loop detected."}</p>`;
-      patternBox.appendChild(el);
-    });
-
-    // Render dashboard action recommendations
+    patternBox.replaceChildren();
     const actionsBox = document.getElementById('dashboard-actions-list');
-    actionsBox.innerHTML = "";
-    
-    const adviceSource = (analysis.harmonyScore < 75) 
-      ? auraData.adviceTemplates.anxious.actions 
-      : auraData.adviceTemplates.secure.actions;
-
-    adviceSource.slice(0, 3).forEach(action => {
-      const el = document.createElement('div');
-      el.className = "insight-item success";
-      el.innerHTML = `<strong>Recommendation:</strong><p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem;">${action}</p>`;
-      actionsBox.appendChild(el);
-    });
-
-    // Render Growth progress trackers
+    actionsBox.replaceChildren();
+    if (!analysis) {
+      patternBox.appendChild(this.element('p', 'insight-item', 'No current analysis. Choose a transcript in the Upload Center and run the local scan.'));
+      actionsBox.appendChild(this.element('p', 'insight-item', 'Recommendations are generated only from an analyzed conversation.'));
+    } else {
+      analysis.findings.forEach((finding) => {
+        const card = this.element('div', 'insight-item');
+        card.append(this.element('strong', '', finding.title), this.element('p', '', `${finding.observation} Evidence: ${finding.evidenceMessageIds.join(', ')}.`));
+        patternBox.appendChild(card);
+      });
+      if (!analysis.findings.length) patternBox.appendChild(this.element('p', 'insight-item', 'No configured wording markers found in this transcript.'));
+      analysis.recommendations.slice(0, 3).forEach((recommendation) => {
+        const card = this.element('div', 'insight-item success');
+        card.append(this.element('strong', '', 'Possible next step'), this.element('p', '', `${recommendation.text}${recommendation.basedOnFindingIds.length ? ` Evidence: ${recommendation.basedOnFindingIds.join(', ')}.` : ''}`));
+        actionsBox.appendChild(card);
+      });
+    }
     document.getElementById('dash-course-progress-text').textContent = `${state.completedLessons.length} of 9 lessons`;
-    const percent = Math.round((state.completedLessons.length / 9) * 100);
-    document.getElementById('dash-course-progress-bar').style.width = percent + "%";
+    document.getElementById('dash-course-progress-bar').style.width = `${Math.round((state.completedLessons.length / 9) * 100)}%`;
     document.getElementById('dash-journal-count').textContent = `${state.journalEntries.length} Entries`;
   },
 
-  // Render Analyzer reports view
-  renderAnalysis: function(analysis) {
-    document.getElementById('analysis-report-title').textContent = `Analyzing conversation between ${analysis.user} and ${analysis.partner}`;
-    
-    // Overview Harmony score
-    document.getElementById('report-score-val').textContent = analysis.harmonyScore;
-    this.updateScoreDial('report-score-ring', analysis.harmonyScore);
-
-    // Urgency Badge
-    const urgBadge = document.getElementById('report-urgency-badge');
-    urgBadge.textContent = analysis.urgency + " Escalation Risk";
-    if (analysis.urgency === "High") {
-      urgBadge.className = "badge badge-danger";
-    } else if (analysis.urgency === "Medium") {
-      urgBadge.className = "badge badge-warning";
-    } else {
-      urgBadge.className = "badge badge-success";
+  renderAnalysis: function(analysis, conversation) {
+    const current = document.getElementById('analysis-current');
+    const note = document.getElementById('analysis-method-note');
+    const button = document.getElementById('btn-export-pdf');
+    const report = document.getElementById('print-report');
+    report.replaceChildren();
+    if (!analysis || !conversation || analysis.conversationId !== conversation.id || analysis.analysisVersion !== conversation.version) {
+      current.classList.add('hidden');
+      button.disabled = true;
+      document.getElementById('analysis-report-title').textContent = conversation
+        ? 'This transcript has not been analyzed in its current version. Review it in Upload Center and run analysis.'
+        : 'Choose or add a transcript to see source-grounded observations.';
+      note.textContent = 'No current analysis is available. Aura does not generate default or sample findings without a transcript.';
+      return;
     }
-    
-    document.getElementById('report-urgency-description').textContent = analysis.urgencyDesc;
-    document.getElementById('report-trigger-text').textContent = analysis.primaryTrigger;
+    current.classList.remove('hidden');
+    button.disabled = false;
+    const title = `${conversation.sourceName} · version ${conversation.version}`;
+    document.getElementById('analysis-report-title').textContent = title;
+    const persistence = typeof app !== 'undefined' && app.storageUnavailable
+      ? 'Browser storage is unavailable; this working copy may not survive a refresh.'
+      : 'Stored in this signed-in user’s browser-local state only; it does not sync to a server.';
+    note.textContent = `Local heuristic scan · ${analysis.messageCount} messages · no AI provider or third-party analysis service is configured. ${persistence}`;
+    document.getElementById('analysis-message-count').textContent = String(analysis.messageCount);
+    document.getElementById('analysis-speakers').textContent = analysis.participants.join(', ');
+    document.getElementById('analysis-source-name').textContent = conversation.sourceName;
+    document.getElementById('analysis-summary').textContent = analysis.summary;
+    document.getElementById('analysis-limitations').textContent = analysis.limitations;
 
-    // Executive Summary construction
-    let summaryText = "";
-    if (analysis.harmonyScore < 50) {
-      summaryText = `This conversation reveals significant emotional tension between ${analysis.user} and ${analysis.partner}. The presence of absolute accusations and defensive responses has created an escalatory feedback loop. Effort is heavily skewed, leading to frustration and withdrawal from one participant. We suggest taking an immediate cooling-off break before attempting to speak again.`;
-    } else if (analysis.harmonyScore < 75) {
-      summaryText = `The conversation between ${analysis.user} and ${analysis.partner} shows a typical pursue-withdraw dynamic. One partner is communicating with anxiety, urging for immediate clarity, which causes the other to withdraw to seek safety. While trust markers are intact, vulnerability feels guarded. Focus on active listening and avoiding absolute statements.`;
-    } else {
-      summaryText = `An excellent conversation between ${analysis.user} and ${analysis.partner}. Both speakers displayed secure attachment traits, stated their concerns clearly without blaming, and actively looked for scheduling or division compromises. Trust is high, and the effort distribution is exceptionally balanced.`;
-    }
-    document.getElementById('report-summary-text').textContent = summaryText;
-
-    // Render user tone charts (custom SVG/CSS bars)
-    document.getElementById('report-user-tone-title').textContent = `${analysis.user}'s Emotional Tone`;
-    const userChart = document.getElementById('report-user-tone-chart');
-    userChart.innerHTML = "";
-    Object.keys(analysis.userTones).forEach(tone => {
-      const val = analysis.userTones[tone];
-      const row = document.createElement('div');
-      row.className = "chart-bar-row";
-      row.innerHTML = `
-        <div class="chart-bar-label">${tone}</div>
-        <div class="chart-bar-track"><div class="chart-bar-fill" style="width: ${val}%;"></div></div>
-        <div class="chart-bar-val">${val}%</div>
-      `;
-      userChart.appendChild(row);
+    const messageMap = new Map(conversation.messages.map((message) => [message.id, message]));
+    const findings = document.getElementById('analysis-findings');
+    findings.replaceChildren();
+    if (!analysis.findings.length) findings.appendChild(this.element('p', 'insight-item', 'No configured language markers were found. That does not establish that the conversation is problem-free.'));
+    analysis.findings.forEach((finding) => {
+      const card = this.element('div', 'insight-item');
+      card.append(this.element('strong', '', finding.title), this.element('p', '', finding.observation));
+      const refs = finding.evidenceMessageIds.map((id) => `${id}${messageMap.has(id) ? ` (${messageMap.get(id).speaker})` : ''}`).join(', ');
+      card.appendChild(this.element('small', '', `Evidence references: ${refs}. ${finding.confidence}.`));
+      findings.appendChild(card);
     });
 
-    // Render partner tone charts
-    document.getElementById('report-partner-tone-title').textContent = `${analysis.partner}'s Emotional Tone`;
-    const partnerChart = document.getElementById('report-partner-tone-chart');
-    partnerChart.innerHTML = "";
-    Object.keys(analysis.partnerTones).forEach(tone => {
-      const val = analysis.partnerTones[tone];
-      const row = document.createElement('div');
-      row.className = "chart-bar-row";
-      row.innerHTML = `
-        <div class="chart-bar-label">${tone}</div>
-        <div class="chart-bar-track"><div class="chart-bar-fill" style="width: ${val}%;"></div></div>
-        <div class="chart-bar-val">${val}%</div>
-      `;
-      partnerChart.appendChild(row);
+    const recommendations = document.getElementById('analysis-recommendations');
+    recommendations.replaceChildren();
+    analysis.recommendations.forEach((item) => {
+      const card = this.element('div', 'insight-item success');
+      card.append(this.element('p', '', item.text));
+      card.appendChild(this.element('small', '', item.basedOnFindingIds.length ? `Based on finding(s): ${item.basedOnFindingIds.join(', ')}.` : 'General next-step prompt; no specific marker supported a more tailored recommendation.'));
+      recommendations.appendChild(card);
     });
 
-    // Effort Balance Pointer Calculation (stroke-dashoffset range [290, 0] centered at 145)
-    // 0 is fully left, 290 is fully right. Pointer coordinates: cx = 20 to 200 (cx = 20 + 1.8 * UserEffort)
-    const cxVal = Math.max(20, Math.min(200, 20 + (1.8 * analysis.userEffortPercent)));
-    document.getElementById('effort-scale-pointer').setAttribute('cx', cxVal);
-    document.getElementById('effort-label-left').textContent = `${analysis.user} (${analysis.userEffortPercent}%)`;
-    document.getElementById('effort-label-right').textContent = `${analysis.partner} (${analysis.partnerEffortPercent}%)`;
-
-    let effortMsg = "Effort is balanced in this conversation.";
-    if (analysis.userEffortPercent > 60) {
-      effortMsg = `${analysis.user} is over-contributing, indicating a pursuit loop.`;
-    } else if (analysis.userEffortPercent < 40) {
-      effortMsg = `${analysis.partner} is over-contributing or ${analysis.user} is shutting down.`;
-    }
-    document.getElementById('effort-summary-msg').textContent = effortMsg;
-
-    // Trust safety index metrics
-    document.getElementById('report-trust-val').textContent = `${analysis.trustIndex}%`;
-    document.getElementById('report-trust-bar').style.width = `${analysis.trustIndex}%`;
-    document.getElementById('report-vuln-val').textContent = `${analysis.vulnerabilityIndex}%`;
-    document.getElementById('report-vuln-bar').style.width = `${analysis.vulnerabilityIndex}%`;
-    document.getElementById('report-defense-val').textContent = `${analysis.defensivenessIndex}%`;
-    document.getElementById('report-defense-bar').style.width = `${analysis.defensivenessIndex}%`;
-
-    // Red Flags List
-    const redBox = document.getElementById('report-red-flags');
-    redBox.innerHTML = "";
-    if (analysis.redFlags.length === 0) {
-      redBox.innerHTML = `<div class="insight-item success">No critical red flags detected in this conversation sample.</div>`;
-    } else {
-      analysis.redFlags.forEach(flag => {
-        const div = document.createElement('div');
-        div.className = "flag-box red animate-fade-in";
-        div.innerHTML = `
-          <div class="flag-title">🚩 ${this.escapeHTML(flag.speaker)} used '${this.escapeHTML(flag.flag)}'</div>
-          <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem;">Context: "${this.escapeHTML(flag.text)}"</p>
-          <small style="color:var(--text-muted); display:block; margin-top:0.25rem;">Reason: ${this.escapeHTML(flag.reason)}</small>
-        `;
-        redBox.appendChild(div);
-      });
-    }
-
-    // Green Flags List
-    const greenBox = document.getElementById('report-green-flags');
-    greenBox.innerHTML = "";
-    if (analysis.greenFlags.length === 0) {
-      greenBox.innerHTML = `<div class="insight-item" style="border-left-color:var(--border-color)">No vulnerability markers detected. Try referencing feelings directly.</div>`;
-    } else {
-      analysis.greenFlags.forEach(flag => {
-        const div = document.createElement('div');
-        div.className = "flag-box green animate-fade-in";
-        div.innerHTML = `
-          <div class="flag-title">🟢 ${this.escapeHTML(flag.speaker)} used '${this.escapeHTML(flag.flag)}'</div>
-          <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem;">Context: "${this.escapeHTML(flag.text)}"</p>
-          <small style="color:var(--text-muted); display:block; margin-top:0.25rem;">Reason: ${this.escapeHTML(flag.reason)}</small>
-        `;
-        greenBox.appendChild(div);
-      });
-    }
+    const evidence = document.getElementById('analysis-evidence');
+    evidence.replaceChildren();
+    conversation.messages.forEach((message) => {
+      const line = this.element('p', 'transcript-evidence');
+      const timestamp = message.timestamp ? ` · ${message.timestamp}` : '';
+      line.append(this.element('strong', '', `[${message.id}] ${message.speaker}${timestamp}: `), document.createTextNode(message.text));
+      evidence.appendChild(line);
+    });
   },
 
-  // Render Reality Check console
-  renderRealityCheck: function(analysis, straightMode) {
+  renderRealityCheck: function(analysis, concise) {
     const consoleText = document.getElementById('reality-talk-content');
-    consoleText.textContent = auraEngines.generateRealityCheck(analysis, straightMode);
-    
-    // Responsibility slider configuration
-    const slider = document.getElementById('reality-responsibility-slider');
-    slider.value = analysis.userEffortPercent;
-    document.getElementById('slider-user-label').textContent = `${analysis.user} (${analysis.userEffortPercent}%)`;
-    document.getElementById('slider-partner-label').textContent = `${analysis.partner} (${analysis.partnerEffortPercent}%)`;
+    consoleText.textContent = auraEngines.generateRealityCheck(analysis, concise);
   },
 
-  // Render Simulator Chat Log
-  renderSimulator: function(state) {
+  renderSimulator: function(state, conversation) {
     const chatArea = document.getElementById('sim-chat-box');
-    chatArea.innerHTML = "";
-
-    state.simMessages.forEach(msg => {
-      const bubble = document.createElement('div');
-      bubble.className = `sim-message ${msg.role}`;
-      bubble.textContent = msg.text;
+    chatArea.replaceChildren();
+    const labels = { context: 'Source excerpt', user: 'Your practice draft', simulation: 'Fictional practice reply', feedback: 'Wording note' };
+    (state.simMessages || []).forEach((message) => {
+      const bubble = this.element('div', `sim-message ${message.role}`);
+      bubble.append(this.element('small', 'sim-message-label', labels[message.role] || 'Practice content'));
+      let text = message.text || '';
+      if (message.role === 'context') {
+        const source = conversation && conversation.messages.find((item) => item.id === message.messageId);
+        text = source ? `${source.speaker}${source.timestamp ? ` · ${source.timestamp}` : ''}: ${source.text}` : 'Source excerpt is not available in this conversation version.';
+      }
+      bubble.appendChild(this.element('div', '', text));
       chatArea.appendChild(bubble);
     });
-
-    // Scroll to bottom
+    if (!state.simMessages || !state.simMessages.length) {
+      chatArea.appendChild(this.element('p', 'insight-item', 'No practice session is active for the current analysis.'));
+    }
     chatArea.scrollTop = chatArea.scrollHeight;
   },
 
-  // Render Growth hub dashboard
-  renderGrowthHub: function(state) {
-    // Highlight completed courses progress ratios
-    const totalLessons = 9;
-    const progressPercent = Math.round((state.completedLessons.length / totalLessons) * 100);
-    
-    const countEq = state.completedLessons.filter(l => l.startsWith('eq_')).length;
-    const countBound = state.completedLessons.filter(l => l.startsWith('bound_')).length;
-    const countComm = state.completedLessons.filter(l => l.startsWith('comm_')).length;
-    
-    document.getElementById('progress-eq').style.width = Math.round((countEq / 3) * 100) + "%";
-    document.getElementById('progress-boundaries').style.width = Math.round((countBound / 3) * 100) + "%";
-    document.getElementById('progress-comm').style.width = Math.round((countComm / 3) * 100) + "%";
-
-    // Daily reflection prompt update
-    const promptIndex = new Date().getDate() % auraData.journalPrompts.length;
-    document.getElementById('journal-daily-prompt').textContent = auraData.journalPrompts[promptIndex];
-
-    // Render Diary log list
-    const diaryBox = document.getElementById('journal-entries-list');
-    diaryBox.innerHTML = "";
-
-    if (state.journalEntries.length === 0) {
-      diaryBox.innerHTML = `<p style="font-size:0.85rem; color:var(--text-muted); text-align:center; padding:1rem 0;">No journal entries logged yet. Write one above!</p>`;
-    } else {
-      state.journalEntries.forEach(entry => {
-        const div = document.createElement('div');
-        div.className = "glass-panel journal-entry-card animate-fade-in";
-        const header = document.createElement('div');
-        header.className = "journal-header";
-
-        const date = document.createElement('span');
-        date.style.cssText = "font-size:0.75rem; color:var(--secondary); font-weight:600;";
-        date.textContent = entry.date;
-
-        const deleteButton = document.createElement('button');
-        deleteButton.className = "btn btn-secondary";
-        deleteButton.style.cssText = "padding:0.25rem 0.5rem; font-size:0.75rem; border:none;";
-        deleteButton.setAttribute('aria-label', `Delete entry from ${entry.date}`);
-        deleteButton.textContent = "✕ Delete";
-        deleteButton.addEventListener('click', () => app.deleteJournal(entry.id));
-        header.append(date, deleteButton);
-
-        const prompt = document.createElement('small');
-        prompt.style.cssText = "color:var(--text-muted); display:block; margin-bottom:0.25rem;";
-        prompt.textContent = `Prompt: "${entry.prompt}"`;
-
-        const text = document.createElement('p');
-        text.style.cssText = "font-size:0.9rem; color:var(--text-secondary); white-space:pre-wrap;";
-        text.textContent = entry.text;
-
-        div.append(header, prompt, text);
-        diaryBox.appendChild(div);
+  renderPrintReport: function(analysis, conversation, simulationMessages) {
+    const root = document.getElementById('print-report');
+    root.replaceChildren();
+    const add = (tag, text) => { const node = this.element(tag, '', text); root.appendChild(node); return node; };
+    add('h1', 'Aura conversation notes');
+    add('p', `${conversation.sourceName} · report version ${analysis.analysisVersion} · created ${new Date().toLocaleString()}`);
+    add('h2', 'Summary');
+    add('p', analysis.summary);
+    add('p', analysis.limitations);
+    add('h2', 'Observed language markers');
+    const messageMap = new Map(conversation.messages.map((message) => [message.id, message]));
+    if (!analysis.findings.length) add('p', 'No configured language markers were found.');
+    analysis.findings.forEach((finding) => {
+      add('h3', finding.title);
+      add('p', finding.observation);
+      finding.evidenceMessageIds.forEach((id) => {
+        const message = messageMap.get(id);
+        if (message) add('blockquote', `[${id}] ${message.speaker}${message.timestamp ? ` · ${message.timestamp}` : ''}: ${message.text}`);
+      });
+    });
+    add('h2', 'Possible next steps');
+    analysis.recommendations.forEach((item) => add('p', `${item.text}${item.basedOnFindingIds.length ? ` (Finding references: ${item.basedOnFindingIds.join(', ')})` : ''}`));
+    const matchingSimulation = (simulationMessages || []).filter((item) => item.conversationId === conversation.id && item.analysisVersion === analysis.analysisVersion);
+    if (matchingSimulation.length) {
+      add('h2', 'Fictional practice session');
+      matchingSimulation.forEach((message) => {
+        if (message.role === 'context') {
+          const source = messageMap.get(message.messageId);
+          if (source) add('blockquote', `[${source.id}] ${source.speaker}${source.timestamp ? ` · ${source.timestamp}` : ''}: ${source.text}`);
+        } else {
+          add('p', `${labelsForRole(message.role)}: ${message.text}`);
+        }
       });
     }
+    add('p', `Report source contains ${conversation.messages.length} messages from ${conversation.speakers.join(', ')}. Generated content is not an assessment or prediction.`);
+    function labelsForRole(role) {
+      return ({ context: 'Source excerpt', user: 'Your draft', simulation: 'Fictional reply', feedback: 'Wording note' })[role] || 'Practice';
+    }
+  },
+
+  renderGrowthHub: function(state) {
+    const totalLessons = 9;
+    const countEq = state.completedLessons.filter((lesson) => lesson.startsWith('eq_')).length;
+    const countBound = state.completedLessons.filter((lesson) => lesson.startsWith('bound_')).length;
+    const countComm = state.completedLessons.filter((lesson) => lesson.startsWith('comm_')).length;
+    document.getElementById('progress-eq').style.width = `${Math.round((countEq / 3) * 100)}%`;
+    document.getElementById('progress-boundaries').style.width = `${Math.round((countBound / 3) * 100)}%`;
+    document.getElementById('progress-comm').style.width = `${Math.round((countComm / 3) * 100)}%`;
+    const promptIndex = new Date().getDate() % auraData.journalPrompts.length;
+    document.getElementById('journal-daily-prompt').textContent = auraData.journalPrompts[promptIndex];
+    const diaryBox = document.getElementById('journal-entries-list');
+    diaryBox.replaceChildren();
+    if (!state.journalEntries.length) {
+      diaryBox.appendChild(this.element('p', '', 'No journal entries logged yet. Write one above!'));
+      return;
+    }
+    state.journalEntries.forEach((entry) => {
+      const card = this.element('div', 'glass-panel journal-entry-card animate-fade-in');
+      const header = this.element('div', 'journal-header');
+      const date = this.element('span', '', entry.date);
+      date.style.cssText = 'font-size:0.75rem; color:var(--secondary); font-weight:600;';
+      const remove = this.element('button', 'btn btn-secondary', 'Delete entry');
+      remove.type = 'button';
+      remove.setAttribute('aria-label', `Delete entry from ${entry.date}`);
+      remove.addEventListener('click', () => app.deleteJournal(entry.id));
+      header.append(date, remove);
+      const prompt = this.element('small', '', `Prompt: ${entry.prompt}`);
+      const text = this.element('p', '', entry.text);
+      text.style.whiteSpace = 'pre-wrap';
+      card.append(header, prompt, text);
+      diaryBox.appendChild(card);
+    });
   }
 };
-
