@@ -17,7 +17,7 @@ The Firebase web app configuration is in `js/firebase-config.js`. Set up the exi
 ## Conversation workflow
 
 1. Sign in with Firebase, then open **Chat Upload Center**.
-2. Paste a transcript or choose a `.txt` or `.json` file. Files are read in the browser, limited to 1 MiB and 5,000 messages. Supported text lines are `Speaker: message`, timestamped `[timestamp] Speaker: message`, and common WhatsApp export lines. JSON is an array or an object with a `messages` array; each item needs a `speaker` or `sender` and `text` or `message` field. Timestamps are optional.
+2. Paste a transcript or choose a `.txt` or `.json` file. Files are read in the browser, limited to 1 MiB and 10,000 messages. Supported text lines are `Speaker: message`, timestamped `[timestamp] Speaker: message`, and common WhatsApp export lines. JSON is an array or an object with a `messages` array; each item needs a `speaker` or `sender` and `text` or `message` field. Timestamps are optional.
 3. Review and edit the preview, then select **Run Analysis**. Unassigned lines are reported and omitted. PDF files, images, and OCR are not supported.
 4. Aura stores each saved conversation under `aura_state_vault:<Firebase UID>` in this browser’s `localStorage`. Choose saved conversations from the picker; a new upload creates a new draft, and deleting a conversation requires confirmation.
 5. Analysis results cite message IDs from that conversation version. Findings and advice are deterministic wording/topic heuristics, not AI output, diagnoses, reliable safety assessments, or predictions of anyone’s intent or behavior. Simulator replies are fictional exercises based on the selected transcript’s last message, detected text cues, and chosen practice objective.

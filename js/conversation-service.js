@@ -2,7 +2,7 @@
 // to a network provider; results are deterministic local heuristics, not AI.
 const auraConversationService = (() => {
   const MAX_BYTES = 1024 * 1024;
-  const MAX_MESSAGES = 5000;
+  const MAX_MESSAGES = 10000;
   const EMOTIONAL_RESPONSE_POINTS = Object.freeze({
     messageResponse: Object.freeze({ reread: 55, ask: 85, reply: 60, pause: 90 }),
     conflictResponse: Object.freeze({ explain: 70, withdraw: 45, resolve: 55, return: 90 }),
