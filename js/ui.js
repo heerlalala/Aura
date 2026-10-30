@@ -130,7 +130,7 @@ const auraUI = {
     const persistence = typeof app !== 'undefined' && app.storageUnavailable
       ? 'Browser storage is unavailable; this working copy may not survive a refresh.'
       : 'Stored in this signed-in user’s browser-local state only; it does not sync to a server.';
-    note.textContent = `Local heuristic scan · ${analysis.messageCount} messages · no AI provider or third-party analysis service is configured. ${persistence}`;
+    note.textContent = `Local heuristic scan · ${analysis.messageCount.toLocaleString()} messages · ${analysis.dateRange || 'All dates'} · no AI provider or third-party analysis service is configured. ${persistence}`;
     document.getElementById('analysis-message-count').textContent = String(analysis.messageCount);
     document.getElementById('analysis-speakers').textContent = analysis.participants.join(', ');
     document.getElementById('analysis-source-name').textContent = conversation.sourceName;
@@ -145,7 +145,9 @@ const auraUI = {
       const card = this.element('div', 'insight-item');
       card.append(this.element('strong', '', finding.title), this.element('p', '', finding.observation));
       const refs = finding.evidenceMessageIds.map((id) => `${id}${messageMap.has(id) ? ` (${messageMap.get(id).speaker})` : ''}`).join(', ');
-      card.appendChild(this.element('small', '', `Evidence references: ${refs}. ${finding.confidence}.`));
+      const matchCount = Number.isFinite(finding.matchCount) ? finding.matchCount : finding.evidenceMessageIds.length;
+      const evidenceNote = finding.evidenceTruncated ? ` Showing ${finding.evidenceMessageIds.length} of ${matchCount} matches.` : '';
+      card.appendChild(this.element('small', '', `Evidence references: ${refs}.${evidenceNote} ${finding.confidence}.`));
       findings.appendChild(card);
     });
 
@@ -160,12 +162,16 @@ const auraUI = {
 
     const evidence = document.getElementById('analysis-evidence');
     evidence.replaceChildren();
-    conversation.messages.forEach((message) => {
+    const displayedIds = new Set(analysis.displayedMessageIds || conversation.messages.slice(0, 500).map((message) => message.id));
+    conversation.messages.filter((message) => displayedIds.has(message.id)).forEach((message) => {
       const line = this.element('p', 'transcript-evidence');
       const timestamp = message.timestamp ? ` · ${message.timestamp}` : '';
       line.append(this.element('strong', '', `[${message.id}] ${message.speaker}${timestamp}: `), document.createTextNode(message.text));
       evidence.appendChild(line);
     });
+    if (analysis.messageCount > displayedIds.size) {
+      evidence.appendChild(this.element('p', 'insight-item', `Showing ${displayedIds.size.toLocaleString()} of ${analysis.messageCount.toLocaleString()} analyzed messages here to keep the page responsive. The full transcript remains available in this working session.`));
+    }
   },
 
   renderRealityCheck: function(analysis, concise) {

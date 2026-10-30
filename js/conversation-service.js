@@ -1,8 +1,6 @@
 // Browser-only conversation workflow. This service never sends transcript text
 // to a network provider; results are deterministic local heuristics, not AI.
 const auraConversationService = (() => {
-  const MAX_BYTES = 1024 * 1024;
-  const MAX_MESSAGES = 10000;
   const EMOTIONAL_RESPONSE_POINTS = Object.freeze({
     messageResponse: Object.freeze({ reread: 55, ask: 85, reply: 60, pause: 90 }),
     conflictResponse: Object.freeze({ explain: 70, withdraw: 45, resolve: 55, return: 90 }),
@@ -78,18 +76,9 @@ const auraConversationService = (() => {
     return `${prefix}-${value}`;
   }
 
-  function byteLength(text) {
-    return typeof TextEncoder === 'function'
-      ? new TextEncoder().encode(text).length
-      : unescape(encodeURIComponent(text)).length;
-  }
-
   function checkText(input) {
     if (typeof input !== 'string' || !input.trim()) {
       throw new Error('The transcript is empty. Add readable conversation text first.');
-    }
-    if (byteLength(input) > MAX_BYTES) {
-      throw new Error('The transcript exceeds Aura’s 1 MiB limit. Split it into smaller conversations.');
     }
   }
 
@@ -156,9 +145,6 @@ const auraConversationService = (() => {
     if (!result.messages.length) {
       throw new Error('No readable messages found. Use “Speaker: message” lines or a JSON messages array.');
     }
-    if (result.messages.length > MAX_MESSAGES) {
-      throw new Error(`This transcript has more than ${MAX_MESSAGES} messages. Split it into smaller conversations.`);
-    }
     const messages = result.messages.map((message, index) => ({
       id: `m${index + 1}`,
       sequence: index + 1,
@@ -187,6 +173,38 @@ const auraConversationService = (() => {
     }).join('\n');
   }
 
+  function filterConversationByDate(conversation, period, now = new Date()) {
+    if (period !== '3months') return { ...conversation, dateRange: 'All dates' };
+    const since = new Date(now);
+    const originalDay = since.getDate();
+    since.setDate(1);
+    since.setMonth(since.getMonth() - 3);
+    since.setDate(Math.min(originalDay, new Date(since.getFullYear(), since.getMonth() + 1, 0).getDate()));
+    since.setHours(0, 0, 0, 0);
+    const parseTimestamp = (value) => {
+      if (!value) return null;
+      const local = String(value).match(/\b(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})\b/);
+      if (local) {
+        let year = +local[3]; if (year < 100) year += year < 70 ? 2000 : 1900;
+        const first = +local[1], second = +local[2];
+        const monthFirst = typeof navigator !== 'undefined' && /^en-US/i.test(navigator.language || '');
+        const month = first > 12 ? second : (monthFirst ? first : second);
+        const day = first > 12 ? first : (monthFirst ? second : first);
+        return new Date(year, month - 1, day);
+      }
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    };
+    const messages = conversation.messages.filter((message) => {
+      const date = parseTimestamp(message.timestamp);
+      return date && date >= since && date <= now;
+    });
+    if (!messages.length) {
+      throw new Error('No timestamped messages were found in the last three months. Choose All dates or import a timestamped transcript.');
+    }
+    return { ...conversation, messages, dateRange: 'Last 3 months' };
+  }
+
   function analyzeLocally(conversation) {
     if (!conversation || !Array.isArray(conversation.messages) || !conversation.messages.length) {
       throw new Error('Choose a conversation with readable messages before analyzing.');
@@ -205,21 +223,27 @@ const auraConversationService = (() => {
       { id: 'boundaries', title: 'Stated limits or boundaries', re: /\b(i need to|i can’t|i can't|i will not|i won’t|i won't|not comfortable|my boundary)\b/i, note: 'These messages state a limit or comfort boundary.' }
     ];
     const findings = patterns.map((pattern) => {
-      const evidenceMessageIds = messages.filter((message) => pattern.re.test(message.text)).map((message) => message.id);
+      let matchCount = 0;
+      const evidenceMessageIds = [];
+      messages.forEach((message) => {
+        if (!pattern.re.test(message.text)) return;
+        matchCount++;
+        if (evidenceMessageIds.length < 100) evidenceMessageIds.push(message.id);
+      });
       if (!evidenceMessageIds.length) return null;
       return {
         id: pattern.id,
         title: pattern.title,
         observation: pattern.note,
         evidenceMessageIds,
+        matchCount,
+        evidenceTruncated: matchCount > evidenceMessageIds.length,
         confidence: 'limited text marker'
       };
     }).filter(Boolean);
 
-    const messageCounts = Object.fromEntries(speakers.map((speaker) => [
-      speaker,
-      messages.filter((message) => message.speaker === speaker).length
-    ]));
+    const messageCounts = Object.fromEntries(speakers.map((speaker) => [speaker, 0]));
+    messages.forEach((message) => { messageCounts[message.speaker] = (messageCounts[message.speaker] || 0) + 1; });
     const topicCues = [];
     const topicPatterns = [
       ['response timing', /\b(reply|replied|text|message|respond|response)\b/i],
@@ -227,14 +251,22 @@ const auraConversationService = (() => {
       ['time together', /\b(time together|date|weekend|schedule|plans?)\b/i]
     ];
     topicPatterns.forEach(([label, re]) => {
-      const ids = messages.filter((message) => re.test(message.text)).map((message) => message.id);
-      if (ids.length) {
-        topicCues.push({ label, evidenceMessageIds: ids });
-        if (ids.length > 1) findings.push({
+      let count = 0;
+      const ids = [];
+      messages.forEach((message) => {
+        if (!re.test(message.text)) return;
+        count++;
+        if (ids.length < 100) ids.push(message.id);
+      });
+      if (count) {
+        topicCues.push({ label, evidenceMessageIds: ids, matchCount: count, evidenceTruncated: count > ids.length });
+        if (count > 1) findings.push({
           id: `topic-${label.replace(/\s+/g, '-')}`,
           title: 'Repeated topic cue',
-          observation: `The phrase pattern for “${label}” appears in ${ids.length} messages. This is a word-count observation, not proof of an ongoing conflict or its cause.`,
+          observation: `The phrase pattern for “${label}” appears in ${count} messages. This is a word-count observation, not proof of an ongoing conflict or its cause.`,
           evidenceMessageIds: ids,
+          matchCount: count,
+          evidenceTruncated: count > ids.length,
           confidence: 'repeated word cue'
         });
       }
@@ -289,6 +321,8 @@ const auraConversationService = (() => {
       primarySpeaker: firstSpeaker,
       otherSpeakers,
       messageCount: messages.length,
+      displayedMessageIds: messages.slice(0, 500).map((message) => message.id),
+      dateRange: conversation.dateRange || 'All dates',
       messageCounts,
       topicCues,
       findings,
@@ -353,12 +387,11 @@ const auraConversationService = (() => {
   }
 
   return Object.freeze({
-    MAX_BYTES,
-    MAX_MESSAGES,
     calculateEmotionalResponseScore,
     buildOnboardingReflections,
     normalizeTranscript,
     toEditableText,
+    filterConversationByDate,
     analyzeConversation,
     localHeuristicProvider,
     reviewDraft,

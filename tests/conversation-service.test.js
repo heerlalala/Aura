@@ -72,8 +72,10 @@ test('rejects empty, malformed, and unsupported JSON structures instead of inven
   assert.throws(() => service.normalizeTranscript('{"items":[]}', { format: 'json' }), /messages array/i);
 });
 
-test('rejects oversized inputs', () => {
-  assert.throws(() => service.normalizeTranscript('x'.repeat(service.MAX_BYTES + 1)), /1 MiB/i);
+test('accepts transcripts above the former 1 MiB limit', () => {
+  const conversation = service.normalizeTranscript(`Alex: ${'x'.repeat(1024 * 1024)}`);
+  assert.equal(conversation.messages.length, 1);
+  assert.equal(conversation.messages[0].text.length, 1024 * 1024);
 });
 
 test('findings and recommendations reference actual source message IDs', async () => {

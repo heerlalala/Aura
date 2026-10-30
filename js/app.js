@@ -35,6 +35,7 @@ const app = {
   pendingImport: null,
   draftHasChanges: false,
   storageUnavailable: false,
+  stateWriteSequence: 0,
 
   // Initialize App
   init: function() {
@@ -56,8 +57,8 @@ const app = {
       return;
     }
 
-    firebase.onAuthStateChanged(firebase.auth, (user) => {
-      this.handleAuthStateChanged(user);
+    firebase.onAuthStateChanged(firebase.auth, async (user) => {
+      await this.handleAuthStateChanged(user);
     }, (error) => {
       if (this.currentUser) this.clearPrivateSessionUI();
       this.currentUser = null;
@@ -75,17 +76,68 @@ const app = {
     return userId ? `aura_state_vault:${userId}` : null;
   },
 
-  saveState: function() {
+  openLocalDatabase: function() {
+    return new Promise((resolve, reject) => {
+      if (!window.indexedDB) { reject(new Error('IndexedDB is unavailable')); return; }
+      const request = indexedDB.open('aura-local-vault', 1);
+      request.onupgradeneeded = () => {
+        if (!request.result.objectStoreNames.contains('states')) request.result.createObjectStore('states');
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error('Could not open local storage'));
+    });
+  },
+
+  readIndexedState: async function(key) {
+    const db = await this.openLocalDatabase();
+    return new Promise((resolve, reject) => {
+      const request = db.transaction('states', 'readonly').objectStore('states').get(key);
+      request.onsuccess = () => { db.close(); resolve(request.result || null); };
+      request.onerror = () => { db.close(); reject(request.error); };
+    });
+  },
+
+  writeIndexedState: async function(key, value, sequence) {
+    const db = await this.openLocalDatabase();
+    if (sequence !== this.stateWriteSequence) { db.close(); return; }
+    return new Promise((resolve, reject) => {
+      const request = db.transaction('states', 'readwrite').objectStore('states').put(value, key);
+      request.onsuccess = () => { db.close(); resolve(); };
+      request.onerror = () => { db.close(); reject(request.error); };
+    });
+  },
+
+  deleteIndexedState: async function(key) {
+    if (!window.indexedDB) return;
+    const db = await this.openLocalDatabase();
+    return new Promise((resolve, reject) => {
+      const request = db.transaction('states', 'readwrite').objectStore('states').delete(key);
+      request.onsuccess = () => { db.close(); resolve(); };
+      request.onerror = () => { db.close(); reject(request.error); };
+    });
+  },
+
+  saveState: async function() {
     const key = this.storageKey();
     if (!key) return false;
+    const sequence = ++this.stateWriteSequence;
+    const snapshot = this.state;
     try {
-      localStorage.setItem(key, JSON.stringify(this.state));
+      await this.writeIndexedState(key, snapshot, sequence);
+      if (sequence !== this.stateWriteSequence) return true;
       this.storageUnavailable = false;
       return true;
     } catch (_) {
-      this.storageUnavailable = true;
-      this.setUploadStatus('Aura could not save to this browser’s storage. Export your work or free browser storage space before continuing.', true);
-      return false;
+      try {
+        localStorage.setItem(key, JSON.stringify(snapshot));
+        try { await this.deleteIndexedState(key); } catch (_) { /* localStorage now holds the newest copy */ }
+        this.storageUnavailable = false;
+        return true;
+      } catch (_) {
+        this.storageUnavailable = true;
+        this.setUploadStatus('Aura could not save to this browser’s storage. Export your work or free browser storage space before continuing.', true);
+        return false;
+      }
     }
   },
 
@@ -199,6 +251,27 @@ const app = {
     this.renderCurrentView();
   },
 
+  runTranscriptWorker: function(operation, payload, fallback) {
+    const fallbackRun = () => Promise.resolve().then(fallback);
+    if (typeof Worker === 'undefined') return fallbackRun();
+    return new Promise((resolve, reject) => {
+      let worker;
+      try { worker = new Worker('js/analysis-worker.js'); }
+      catch (_) { fallbackRun().then(resolve, reject); return; }
+      worker.onmessage = (event) => {
+        worker.terminate();
+        if (event.data && event.data.error) reject(new Error(event.data.error));
+        else resolve(event.data);
+      };
+      worker.onerror = () => {
+        worker.terminate();
+        fallbackRun().then(resolve, reject);
+      };
+      try { worker.postMessage({ operation, payload }); }
+      catch (_) { worker.terminate(); fallbackRun().then(resolve, reject); }
+    });
+  },
+
   importTranscriptFile: async function(file) {
     if (!file) return;
     const extension = file.name.toLowerCase().split('.').pop();
@@ -211,13 +284,17 @@ const app = {
       this.setUploadStatus('The file extension and reported file type do not match. Save it as a plain text or JSON transcript and try again.', true);
       return;
     }
-    if (!file.size || file.size > auraConversationService.MAX_BYTES) {
-      this.setUploadStatus(file.size ? 'This file exceeds Aura’s 1 MiB limit.' : 'This file is empty.', true);
+    if (!file.size) {
+      this.setUploadStatus('This file is empty.', true);
       return;
     }
     try {
       const content = await file.text();
-      const parsed = auraConversationService.normalizeTranscript(content, { format: extension === 'json' ? 'json' : 'text' });
+      const options = { format: extension === 'json' ? 'json' : 'text' };
+      const result = await this.runTranscriptWorker('normalize', { text: content, options }, () => ({
+        conversation: auraConversationService.normalizeTranscript(content, options)
+      }));
+      const parsed = result.conversation;
       document.getElementById('pasted-chat-text').value = auraConversationService.toEditableText(parsed);
       this.pendingImport = { sourceName: file.name, sourceType: extension };
       this.state.activeConversationId = null;
@@ -243,17 +320,24 @@ const app = {
       const existing = !this.pendingImport && this.getActiveConversation();
       const sameId = existing ? existing.id : null;
       const sameCreatedAt = existing ? existing.createdAt : null;
-      const conversation = auraConversationService.normalizeTranscript(text, {
+      const options = {
         id: sameId || undefined,
         version: existing ? existing.version + 1 : 1,
         createdAt: sameCreatedAt || undefined,
         sourceName: this.pendingImport?.sourceName || existing?.sourceName || 'Pasted transcript',
         sourceType: this.pendingImport?.sourceType || existing?.sourceType || 'text'
-      });
+      };
       if (!existing && this.state.conversations.length >= 10) {
         throw new Error('Aura stores up to 10 conversations in this browser. Delete one explicitly before adding another.');
       }
-      const analysis = await auraConversationService.analyzeConversation(conversation, auraConversationService.localHeuristicProvider);
+      const period = document.getElementById('transcript-period').value;
+      const result = await this.runTranscriptWorker('analyze-text', { text, options, period }, async () => {
+        const conversation = auraConversationService.normalizeTranscript(text, options);
+        const selected = auraConversationService.filterConversationByDate(conversation, period);
+        const analysis = await auraConversationService.analyzeConversation(selected, auraConversationService.localHeuristicProvider);
+        return { conversation, analysis };
+      });
+      const { conversation, analysis } = result;
       const index = this.state.conversations.findIndex((item) => item.id === conversation.id);
       if (index >= 0) this.state.conversations[index] = conversation;
       else this.state.conversations.unshift(conversation);
@@ -266,9 +350,9 @@ const app = {
       this.pendingImport = null;
       this.draftHasChanges = false;
       this.renderConversationPicker();
-      const persisted = this.saveState();
+      const persisted = await this.saveState();
       this.setUploadStatus(persisted
-        ? `Saved and analyzed ${conversation.messages.length} messages locally. No transcript was sent to an analysis provider.${conversation.extractionWarnings ? ` ${conversation.extractionWarnings} unassigned line(s) were omitted.` : ''}`
+        ? `Saved ${conversation.messages.length.toLocaleString()} messages; analyzed ${analysis.messageCount.toLocaleString()} (${analysis.dateRange}) locally. No transcript was sent to an analysis provider.${conversation.extractionWarnings ? ` ${conversation.extractionWarnings} unassigned line(s) were omitted.` : ''}`
         : 'Analysis completed in memory but could not be saved to browser storage. Export the data before refreshing or close this tab.', !persisted);
       if (auraEngines.detectCrisis(text)) {
         document.getElementById('crisis-alert-banner').classList.remove('hidden');
@@ -329,19 +413,23 @@ const app = {
       }));
   },
 
-  loadState: function(uid) {
+  loadState: async function(uid) {
     this.state = createDefaultState();
     const key = this.storageKey(uid);
     let raw = null;
     try {
-      raw = key && localStorage.getItem(key);
-    } catch (_) {
-      this.storageUnavailable = true;
-      this.setUploadStatus('Browser storage is unavailable. Aura can work with the current transcript temporarily, but cannot save it here.', true);
+      raw = key && await this.readIndexedState(key);
+    } catch (_) { /* fall back to localStorage for older browsers or blocked IndexedDB */ }
+    if (!raw) {
+      try { raw = key && localStorage.getItem(key); }
+      catch (_) {
+        this.storageUnavailable = true;
+        this.setUploadStatus('Browser storage is unavailable. Aura can work with the current transcript temporarily, but cannot save it here.', true);
+      }
     }
     if (raw) {
       try {
-        const parsed = JSON.parse(raw);
+        const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
         this.state = { ...this.state, ...parsed };
         delete this.state.activeAnalysis;
         delete this.state.audioInterval;
@@ -368,7 +456,7 @@ const app = {
     this.renderConversationPicker();
   },
 
-  handleAuthStateChanged: function(user) {
+  handleAuthStateChanged: async function(user) {
     const previousUid = this.currentUser && this.currentUser.uid;
     const nextUid = user && user.uid;
     if (previousUid && previousUid !== nextUid) this.clearPrivateSessionUI();
@@ -383,7 +471,8 @@ const app = {
       return;
     }
 
-    this.loadState(user.uid);
+    await this.loadState(user.uid);
+    if (!this.currentUser || this.currentUser.uid !== user.uid) return;
     if (!this.state.username || this.state.username === 'Alex') {
       this.state.username = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
     }
@@ -971,6 +1060,7 @@ const app = {
     const loadSample = (sample, label) => {
       self.startNewConversation(label, 'sample');
       document.getElementById('pasted-chat-text').value = sample;
+      document.getElementById('transcript-period').value = 'all';
       self.setUploadStatus(`${label} loaded as a new draft. Review it before saving and analyzing.`);
       self.logAudit('Sample conversation loaded for review.');
     };
@@ -1067,19 +1157,24 @@ const app = {
 
     // Settings actions
     document.getElementById('btn-export-settings-data').addEventListener('click', () => {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(self.state, null, 2));
+      const exportBlob = new Blob([JSON.stringify(self.state, null, 2)], { type: 'application/json' });
+      const exportUrl = URL.createObjectURL(exportBlob);
       const dlAnchorElem = document.createElement('a');
-      dlAnchorElem.setAttribute("href", dataStr);
+      dlAnchorElem.setAttribute("href", exportUrl);
       dlAnchorElem.setAttribute("download", "aura_secure_vault.json");
       dlAnchorElem.click();
+      setTimeout(() => URL.revokeObjectURL(exportUrl), 1000);
       self.logAudit("Data vault exported successfully.");
     });
 
-    document.getElementById('btn-clear-settings-data').addEventListener('click', () => {
+    document.getElementById('btn-clear-settings-data').addEventListener('click', async () => {
       if (confirm("Are you sure you want to delete all local files and metrics? This cannot be undone.")) {
         const key = self.storageKey();
-        try { if (key) localStorage.removeItem(key); }
-        catch (_) { self.setUploadStatus('Aura could not clear browser storage. Remove this site’s data in your browser settings.', true); }
+        if (key) {
+          try { await self.deleteIndexedState(key); } catch (_) { /* continue with the localStorage fallback */ }
+          try { localStorage.removeItem(key); }
+          catch (_) { self.setUploadStatus('Aura could not clear browser storage. Remove this site’s data in your browser settings.', true); }
+        }
         self.state = createDefaultState();
         self.renderConversationPicker();
         self.renderSecurityStatus();
