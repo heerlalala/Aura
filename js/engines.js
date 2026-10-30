@@ -11,17 +11,18 @@ const auraEngines = {
 
   generateRealityCheck: function(analysis, concise) {
     if (!analysis) return 'No current analysis is available. Select a transcript and run the local text scan first.';
-    const lines = [concise ? 'Concise evidence notes' : 'Transcript-linked observations', analysis.summary, ''];
+    const lines = [concise ? 'A few notes from the transcript' : 'What stood out in the transcript', analysis.summary, ''];
     if (analysis.findings.length) {
-      lines.push('Observed markers:');
+      lines.push('Wording patterns to consider:');
       analysis.findings.forEach((finding) => {
-        lines.push(`• ${finding.title} [${finding.evidenceMessageIds.join(', ')}]`);
+        const count = Number.isFinite(finding.matchCount) ? finding.matchCount : (finding.evidenceMessageIds || []).length;
+        lines.push(`• ${finding.title} — this wording appeared in ${count} message${count === 1 ? '' : 's'}. It may be useful to read those moments in context; wording alone cannot tell us intent.`);
       });
     } else {
       lines.push('No configured language markers were found. This does not mean that the conversation has no important context.');
     }
     lines.push('', 'Possible next steps:');
-    analysis.recommendations.forEach((item) => lines.push(`• ${item.text}${item.basedOnFindingIds.length ? ` [${item.basedOnFindingIds.join(', ')}]` : ''}`));
+    analysis.recommendations.forEach((item) => lines.push(`• ${item.text}`));
     lines.push('', analysis.limitations);
     return lines.join('\n');
   },
